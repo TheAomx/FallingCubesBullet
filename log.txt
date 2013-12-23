@@ -1,0 +1,7 @@
+23-12-2013 22:45:41 Fatal exception occured: compilation of quad.vertex failed:
+  0:1(10): error: Illegal text following version number
+
+0:1(10): error: GLSL 3.30 is not supported. Supported versions are: 1.00 ES, 1.10, 1.20, and 1.30
+
+
+
