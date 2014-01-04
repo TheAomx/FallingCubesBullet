@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -pedantic -std=c++11 -g -static -I/usr/include/bullet/
+CFLAGS = -Wall -pedantic -std=c++0x -g -static
 PROG = main
 
 SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp
