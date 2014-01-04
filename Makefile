@@ -5,7 +5,7 @@ PROG = main
 SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp
 OBJS := $(SRCS:.cpp=.o)
 prereq_files := $(SRCS:.cpp=.d)
-LIBS = -lGL -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lglfw
+LIBS = -L ./ -lGL -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lglfw
 
 all:
 
