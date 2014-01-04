@@ -16,6 +16,7 @@ using namespace std;
 class FatalException : public exception {
 public:
     FatalException(string msg);
+    ~FatalException()  throw();
     const char* what() const throw();
     void handleException();
 private:

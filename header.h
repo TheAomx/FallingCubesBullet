@@ -1,6 +1,9 @@
 #ifndef HEADER_H
 #define HEADER_H
+
+#if 0
 #define DEBUG 1
+#endif
 
 #ifdef DEBUG
 #define DBG(format, ...) do {\

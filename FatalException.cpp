@@ -15,6 +15,10 @@ FatalException::FatalException(const string msg) {
     Logger::getInstance()->writeMessage("Fatal exception occured: " +  this->msg);
 }
 
+FatalException::~FatalException ()  throw() {
+
+}
+
 void FatalException::handleException() {
     DBG("Fatal exception occured: %s", this->msg.c_str());
     
