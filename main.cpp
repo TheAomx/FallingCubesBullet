@@ -29,6 +29,8 @@ Shader *vertexShader, *fragmentShader;
 GLuint shaderProgrammeID ;
 int matrix_location, mvp_location = 0;
 Quad *quads[NUM_QUADS];
+btRigidBody *body[NUM_QUADS];
+
 
 int windowWidth = 1024, windowHeight = 768;
 
@@ -171,7 +173,7 @@ void initPhysics() {
     m_dynamicsWorld->setGravity(btVector3(0,-1,0));
     
     ///create a few basic rigid bodies
-    btBoxShape *groundShape = new btBoxShape(btVector3(btScalar(50.0),btScalar(50.0),btScalar(50.0)));
+    btBoxShape *groundShape = new btBoxShape(btVector3(btScalar(150.0),btScalar(50.0),btScalar(150.0)));
 
     m_collisionShapes.push_back(groundShape);
 
@@ -229,11 +231,11 @@ void initPhysics() {
             //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
             btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
             btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
-            btRigidBody* body = new btRigidBody(rbInfo);
+            body[i] = new btRigidBody(rbInfo);
 //            if (i == 0) body->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(1.00f)));
 
 
-            m_dynamicsWorld->addRigidBody(body);
+            m_dynamicsWorld->addRigidBody(body[i]);
          }
     }
 }
@@ -280,22 +282,35 @@ void initializeOpenGL() {
 //        mvp_location = glGetUniformLocation (shaderProgrammeID, "mvp");
 //        glUseProgram (shaderProgrammeID);
 //        glUniformMatrix4fv (mvp_location, 1, GL_FALSE, matrix);
-        
-    double xVal = 0.0f;
-    double yVal = 50.0f;
-    for (int i = 0; i < NUM_QUADS; i++) {
-        quads[i] = new Quad (xVal, yVal, 3.0f);
-      
 
-//        quads[i]->setColor(r,g,b);
-        xVal += 0.1f;
+    glEnable ( GL_DEPTH_TEST ); 
+    double xVal = 0.0f;
+    double yVal = 30.0f;
+    double baseX = 0.00f;
+    double t = 0.00;
+    
+    for (int i = 0; i < 20; i++) {
+        quads[i] = new Quad(xVal+1.0f+i*3.0f, 100.0f, 350.0f);
+    }
+    
+    
+    for (int i = 20; i < NUM_QUADS; i++) {
+        t = -1 + 2 * ((float) (i / (float) NUM_QUADS));
+        
+        //        quads[i]->setColor(r,g,b);
+        //        xVal = 5.00;
+        if (i % 25 == 0) {
+            yVal = 30.0f;
+            xVal += 4.00f;
+        }
         yVal += 3.5f;
+        quads[i] = new Quad(xVal, yVal, 3.0f);
     }
     initPhysics();
    
         
         
-//          glUniformMatrix4fv(Quad::mvp_location, 1, GL_FALSE, glm::value_ptr(MVP));
+//          glUniformMatrix4fv(Quad::mvp_location, 1, GL_FALE, glm::value_ptr(MVP));
 	
 }
 
@@ -407,6 +422,8 @@ int main(int argc, char** argv) {
                 ///step the simulation
                 if (m_dynamicsWorld)
                 {
+                    for (int i = 0; i < 20; i++)
+                        body[i]->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
 //                         printf("elapsed %f ms!\n", ms);
                         m_dynamicsWorld->stepSimulation(ms);
                         //optional but useful: debug drawing
@@ -426,7 +443,7 @@ int main(int argc, char** argv) {
 //                            quads[i]->setPos(origin.getX(), origin.getY(), origin.getZ());
                             myMotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
                             quads[i]->setMatrix(m);
-//                            rot=myMotionState->m_graphicsWorldTrans.getBasis();
+//                            rot=myMotionState->m_graphicsWorldTrans.getBasis(initi);
                     }
                     else
                     {
@@ -440,9 +457,9 @@ int main(int argc, char** argv) {
 //		glUseProgram (shaderProgrammeID);
 //		glBindVertexArray (VertexArrayID);
 //		glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-                
+                glUseProgram (quads[0]->shaderProgrammeID);
                 for (int i = 0; i < NUM_QUADS; i++) {
-                    glUseProgram (quads[i]->shaderProgrammeID);
+                    
                     glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(MVP));
                     quads[i]->draw();
                 }
