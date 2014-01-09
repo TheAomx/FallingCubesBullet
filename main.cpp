@@ -9,7 +9,7 @@
 #include "Logger.h"
 #include "shape.h"
 #include "quad.h"
- 
+#include "DynamicsWorld.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +21,6 @@
 #if 1
 
 #define NUM_QUADS 500
-#define SCALING 2.0f
 
 GLuint vbuffer, colorBuffer;
 GLuint VertexArrayID;
@@ -29,21 +28,16 @@ Shader *vertexShader, *fragmentShader;
 GLuint shaderProgrammeID ;
 int matrix_location, mvp_location = 0;
 Quad *quads[NUM_QUADS];
-btRigidBody *body[NUM_QUADS];
 
 
-int windowWidth = 1024, windowHeight = 768;
+int windowWidth = 1200, windowHeight = 900;
 
 GLchar errorBuffer[1000];
 
 
 /* Variablen von Bullet Physik Interface... */
-btDefaultCollisionConfiguration *m_collisionConfiguration;
-btCollisionDispatcher *m_dispatcher;
-btBroadphaseInterface *m_broadphase;
-btConstraintSolver *m_solver;
+DynamicsWorld myWorld;
 btDynamicsWorld *m_dynamicsWorld;
-btAlignedObjectArray<btCollisionShape*>	m_collisionShapes;
 
 
 
@@ -52,88 +46,98 @@ Logger* Logger::instance = NULL;
 
 GLFWwindow* window;
 
-static const float points[] = {
-	-0.75f, -0.5f,  0.0f,
-	0.25f,  -0.5f,  0.0f,
-    -0.45f,  0.5f,  0.0f,
-    0.55f,  0.5f,  0.0f,
- 
-  };
+float posX = 0.0f;
+float posY = 0.0f;
 
-float colours[] = {
-  1.0f, 0.0f,  0.0f,
-  0.0f, 1.0f,  0.0f,
-  0.0f, 0.0f,  1.0f,
-  1.0f, 0.0f, 1.0f
-};
+float posZ = -70.0;
 
-float matrix[] = {
-  1.0f, 0.0f, 0.0f, 0.0f, // first column
-  0.0f, 1.0f, 0.0f, 0.0f, // second column
-  0.0f, 0.0f, 1.0f, 0.0f, // third column
-  0.0f, 0.3f, 0.0f, 1.0f // fourth column
-};
+#define ROT_SPEED 5.0f;
 
-float posZ = -40.0;
+float rotX = 0.0f;
+float rotY = 0.0f;
 
 glm::mat4 Projection = glm::perspective(45.0f, (float)windowWidth/(float)windowHeight, 0.1f, 200.f);
-glm::mat4 ViewTranslate = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, posZ));
-glm::mat4 ViewRotateX = glm::rotate(ViewTranslate, 0.0f, glm::vec3(-1.0f, 0.0f, 0.0f));
-glm::mat4 View = glm::rotate(ViewRotateX, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+glm::mat4 ViewRotateY = glm::rotate(glm::mat4(1.0f), rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+glm::mat4 ViewRotateYX = glm::rotate(ViewRotateY, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+glm::mat4 View = glm::translate(ViewRotateYX,glm::vec3(posX, posY, posZ));
+
 glm::mat4 Model = glm::scale(glm::mat4(1.0f),glm::vec3(0.5f));
 
-glm::mat4 MVP = Projection * View * Model;
+glm::vec4 zUnityVector(0, 0, 1, 0);
+glm::vec4 xUnityVector(1,0,0,0);
 
-void createZRotMatrix(float *mat, float phi) {
-    int i = 0;
-    mat[i++] = cos(phi);
-    mat[i++] = -sin(phi);
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = sin(phi);
-    mat[i++] = cos(phi);
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = 1;
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = 0;
-    mat[i++] = 1;
-}
+glm::vec4 viewVector (0,0,1,0);
+
+glm::mat4 MVP = Projection * View * Model;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
-    if ((key==GLFW_KEY_W || key == GLFW_KEY_S) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+    if ((key==GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT || key == GLFW_KEY_UP || key == GLFW_KEY_DOWN || key == GLFW_KEY_A || key == GLFW_KEY_D) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
         if (key==GLFW_KEY_W ) {
-            posZ += 0.5;
+			glm::mat4 rotMatrix (1.0f);
+			rotMatrix = glm::rotate(rotMatrix, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+			rotMatrix = glm::rotate(rotMatrix, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			glm::vec4 posVec = zUnityVector * rotMatrix;
+	
+			posX += posVec.x;
+			posY += posVec.y;
+            posZ += posVec.z;
         }
         else if (key==GLFW_KEY_S) {
-            posZ -= 0.5;
+            glm::mat4 rotMatrix (1.0f);
+			rotMatrix = glm::rotate(rotMatrix, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+			rotMatrix = glm::rotate(rotMatrix, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			glm::vec4 posVec = zUnityVector * rotMatrix;
+	
+			posX -= posVec.x;
+			posY -= posVec.y;
+            posZ -= posVec.z;
         }
-        
+		else if (key==GLFW_KEY_A || key==GLFW_KEY_D) {
+			glm::mat4 rotMatrix (1.0f);
+			rotMatrix = glm::rotate(rotMatrix, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+			rotMatrix = glm::rotate(rotMatrix, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+
+			glm::vec4 posVec = xUnityVector * rotMatrix;
+			
+			float factor = 1.0f;
+			if (key==GLFW_KEY_D) factor = -1.0f; 		
+			
+			posX += factor * posVec.x;
+			posY += factor * posVec.y;
+            posZ += factor * posVec.z;
+		}
+		
+		else if(key == GLFW_KEY_RIGHT) {
+			rotY += ROT_SPEED;
+		}
+		else if (key == GLFW_KEY_LEFT) {
+			rotY -= ROT_SPEED;
+		}
+		else if (key == GLFW_KEY_UP) {
+			rotX -= ROT_SPEED;
+		}
+		else if (key == GLFW_KEY_DOWN) {
+			rotX -= ROT_SPEED;
+		}
+
+		glm::mat4 ViewRotateY = glm::rotate(glm::mat4(1.0f), rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 ViewRotateYX = glm::rotate(ViewRotateY, rotX, glm::vec3(1.0f, 0.0f, 0.0f));	
+		glm::mat4 View = glm::translate(ViewRotateYX,glm::vec3(posX, posY, posZ));
+
+        #if 0
         ViewTranslate = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, posZ));
         ViewRotateX = glm::rotate(ViewTranslate, 0.0f, glm::vec3(-1.0f, 0.0f, 0.0f));
-        View = glm::rotate(ViewRotateX, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-        
+		ViewRotateY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+        View = glm::rotate(ViewRotateY, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+        #endif
          MVP = Projection * View * Model;
     }
-     if ((key==GLFW_KEY_A || key == GLFW_KEY_D) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-         if (key==GLFW_KEY_A ) {
-             for (int i = 0; i < NUM_QUADS; i++) {
-                quads[i]->setRotateValues(quads[i]->getRotateValueX(), quads[i]->getRotateValueY()-10.0f, quads[i]->getRotateValueZ());
-             }
-        }
-        else if (key==GLFW_KEY_D) {
-            for (int i = 0; i < NUM_QUADS; i++) {
-                quads[i]->setRotateValues(quads[i]->getRotateValueX(), quads[i]->getRotateValueY()+10.0f, quads[i]->getRotateValueZ());
-             }
-        }
-     }
 }
 
 	
@@ -160,84 +164,17 @@ void handleResize (GLFWwindow *window,int width,int height) {
 }
 
 void initPhysics() {
-    m_collisionConfiguration = new btDefaultCollisionConfiguration();
-    m_dispatcher = new	btCollisionDispatcher(m_collisionConfiguration);
-    m_broadphase = new btDbvtBroadphase();
     
-    btSequentialImpulseConstraintSolver* sol = new btSequentialImpulseConstraintSolver;
-    m_solver = sol;
+	myWorld.initWorld();
+	m_dynamicsWorld = myWorld.getWorld();
     
-    m_dynamicsWorld = new btDiscreteDynamicsWorld(m_dispatcher,m_broadphase,m_solver,m_collisionConfiguration);
-//    m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
-	
-    m_dynamicsWorld->setGravity(btVector3(0,-1,0));
+    float mass = 1.0;
     
-    ///create a few basic rigid bodies
-    btBoxShape *groundShape = new btBoxShape(btVector3(btScalar(150.0),btScalar(50.0),btScalar(150.0)));
-
-    m_collisionShapes.push_back(groundShape);
-
-    btTransform groundTransform;
-    groundTransform.setIdentity();
-    groundTransform.setOrigin(btVector3(0,-50,0));
-    
-    {
-        btScalar mass(0.);
-
-        //rigidbody is dynamic if and only if mass is non zero, otherwise static
-        bool isDynamic = (mass != 0.f);
-
-        btVector3 localInertia(0,0,0);
-        if (isDynamic)
-                groundShape->calculateLocalInertia(mass,localInertia);
-
-        //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-        btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,groundShape,localInertia);
-        btRigidBody* body = new btRigidBody(rbInfo);
-
-        //add the body to the dynamics world
-        m_dynamicsWorld->addRigidBody(body);
-    }
-    
-    {
-        //create a few dynamic rigidbodies
-        // Re-using the same collision is better for memory usage and performance
-
-        btBoxShape* colShape = new btBoxShape(btVector3(SCALING*0.5,SCALING*0.5,SCALING*0.5));
-        //btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-        m_collisionShapes.push_back(colShape);
-
-        /// Create Dynamic Objects
-        btTransform startTransform;
-        startTransform.setIdentity();
-
-        btScalar	mass(1.f);
-
-        //rigidbody is dynamic if and only if mass is non zero, otherwise static
-        bool isDynamic = (mass != 0.f);
-
-        btVector3 localInertia(0,0,0);
-        if (isDynamic)
-                colShape->calculateLocalInertia(mass,localInertia);
-
-         for (int i = 0; i < NUM_QUADS; i++) {
-             Quad *myQuad = quads[i];
-             startTransform.setOrigin(btVector3(
-                                                    btScalar(myQuad->getX()),
-                                                    btScalar(myQuad->getY()),
-                                                    btScalar(myQuad->getZ())));
-
-            //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,colShape,localInertia);
-            body[i] = new btRigidBody(rbInfo);
-//            if (i == 0) body->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(1.00f)));
-
-
-            m_dynamicsWorld->addRigidBody(body[i]);
-         }
-    }
+	for (int i = 0; i < NUM_QUADS; i++) {
+		if (i == 40) mass = 3.5f;
+		Quad *myQuad = quads[i];
+		myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), mass);
+	}
 }
 
 void initializeOpenGL() {
@@ -289,21 +226,24 @@ void initializeOpenGL() {
     double baseX = 0.00f;
     double t = 0.00;
     
-    for (int i = 0; i < 20; i++) {
-        quads[i] = new Quad(xVal+1.0f+i*3.0f, 100.0f, 350.0f);
+    for (int i = 0; i < 40; i++) {
+        if (i < 20)
+            quads[i] = new Quad(xVal+1.0f+i*3.0f, 100.0f, 350.0f);
+        else
+            quads[i] = new Quad(xVal+1.0f+(i-20)*3.0f, 70.0f, 350.0f);
     }
     
     
-    for (int i = 20; i < NUM_QUADS; i++) {
+    for (int i = 40; i < NUM_QUADS; i++) {
         t = -1 + 2 * ((float) (i / (float) NUM_QUADS));
         
         //        quads[i]->setColor(r,g,b);
         //        xVal = 5.00;
         if (i % 25 == 0) {
-            yVal = 30.0f;
-            xVal += 4.00f;
+            xVal = 0.0f;
+            yVal += 4.00f;
         }
-        yVal += 3.5f;
+        xVal += 3.5f;
         quads[i] = new Quad(xVal, yVal, 3.0f);
     }
     initPhysics();
@@ -422,8 +362,8 @@ int main(int argc, char** argv) {
                 ///step the simulation
                 if (m_dynamicsWorld)
                 {
-                    for (int i = 0; i < 20; i++)
-                        body[i]->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
+                    for (int i = 0; i < 40; i++)
+                        myWorld.getBody(i)->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
 //                         printf("elapsed %f ms!\n", ms);
                         m_dynamicsWorld->stepSimulation(ms);
                         //optional but useful: debug drawing
