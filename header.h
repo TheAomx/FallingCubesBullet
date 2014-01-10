@@ -1,7 +1,7 @@
 #ifndef HEADER_H
 #define HEADER_H
 
-#if 0
+#if 1
 #define DEBUG 1
 #endif
 

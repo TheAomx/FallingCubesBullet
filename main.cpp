@@ -58,14 +58,16 @@ float rotY = 0.0f;
 
 glm::mat4 Projection = glm::perspective(45.0f, (float)windowWidth/(float)windowHeight, 0.1f, 200.f);
 
-glm::mat4 ViewRotateY = glm::rotate(glm::mat4(1.0f), rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-glm::mat4 ViewRotateYX = glm::rotate(ViewRotateY, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-glm::mat4 View = glm::translate(ViewRotateYX,glm::vec3(posX, posY, posZ));
+glm::mat4 ViewRotateX = glm::rotate(glm::mat4(1.0f), rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+glm::mat4 ViewRotateXY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+glm::mat4 View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
 
 glm::mat4 Model = glm::scale(glm::mat4(1.0f),glm::vec3(0.5f));
 
 glm::vec4 zUnityVector(0, 0, 1, 0);
+glm::vec4 yUnityVector(0,-1,0,0);
 glm::vec4 xUnityVector(1,0,0,0);
+
 
 glm::vec4 viewVector (0,0,1,0);
 
@@ -76,34 +78,22 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
     if ((key==GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT || key == GLFW_KEY_UP || key == GLFW_KEY_DOWN || key == GLFW_KEY_A || key == GLFW_KEY_D) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        if (key==GLFW_KEY_W ) {
-			glm::mat4 rotMatrix (1.0f);
-			rotMatrix = glm::rotate(rotMatrix, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-			rotMatrix = glm::rotate(rotMatrix, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-
-			glm::vec4 posVec = zUnityVector * rotMatrix;
-	
-			posX += posVec.x;
-			posY += posVec.y;
-            posZ += posVec.z;
-        }
-        else if (key==GLFW_KEY_S) {
-            glm::mat4 rotMatrix (1.0f);
-			rotMatrix = glm::rotate(rotMatrix, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-			rotMatrix = glm::rotate(rotMatrix, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-
-			glm::vec4 posVec = zUnityVector * rotMatrix;
-	
-			posX -= posVec.x;
-			posY -= posVec.y;
-            posZ -= posVec.z;
+        if (key==GLFW_KEY_W || key==GLFW_KEY_S ) {
+			glm::vec4 posVec = zUnityVector * ViewRotateXY;
+			
+			if (key==GLFW_KEY_W) {
+				posX += posVec.x;
+				posY += posVec.y;
+            	posZ += posVec.z;
+			}
+			else {
+				posX -= posVec.x;
+				posY -= posVec.y;
+            	posZ -= posVec.z;
+			}
         }
 		else if (key==GLFW_KEY_A || key==GLFW_KEY_D) {
-			glm::mat4 rotMatrix (1.0f);
-			rotMatrix = glm::rotate(rotMatrix, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-			rotMatrix = glm::rotate(rotMatrix, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-
-			glm::vec4 posVec = xUnityVector * rotMatrix;
+			glm::vec4 posVec = xUnityVector * ViewRotateXY;
 			
 			float factor = 1.0f;
 			if (key==GLFW_KEY_D) factor = -1.0f; 		
@@ -120,45 +110,38 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			rotY -= ROT_SPEED;
 		}
 		else if (key == GLFW_KEY_UP) {
-			rotX -= ROT_SPEED;
+			rotX -=	ROT_SPEED;	
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			rotX -= ROT_SPEED;
+			rotX += ROT_SPEED;
+		}
+		
+		
+		DBG("rotY = %f, rotX = %f", rotY, rotX);
+
+		if (key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT || key ==  GLFW_KEY_UP || key ==  GLFW_KEY_DOWN) {
+  			ViewRotateX = glm::rotate(glm::mat4(1.0f), rotX, glm::vec3(1.0f, 0.0f, 0.0f));
+			ViewRotateXY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+			View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
+		}
+		
+		else if (key==GLFW_KEY_W || key==GLFW_KEY_S || key==GLFW_KEY_A || key==GLFW_KEY_D) {
+			View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
 		}
 
-		glm::mat4 ViewRotateY = glm::rotate(glm::mat4(1.0f), rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::mat4 ViewRotateYX = glm::rotate(ViewRotateY, rotX, glm::vec3(1.0f, 0.0f, 0.0f));	
-		glm::mat4 View = glm::translate(ViewRotateYX,glm::vec3(posX, posY, posZ));
-
-        #if 0
-        ViewTranslate = glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, 0.0f, posZ));
-        ViewRotateX = glm::rotate(ViewTranslate, 0.0f, glm::vec3(-1.0f, 0.0f, 0.0f));
-		ViewRotateY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-        View = glm::rotate(ViewRotateY, rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-        #endif
          MVP = Projection * View * Model;
     }
 }
 
-	
-void handleKeys	(GLFWwindow *window,int keyID,int scanCode,int keyState,int mods) {
-	if (keyID == GLFW_KEY_ESCAPE) {
-		glfwTerminate();
-		glDeleteBuffers(1, &vbuffer);
-		glDeleteVertexArrays(1, &VertexArrayID);	
-		exit(EXIT_SUCCESS);
-	}
-	printf("taste gedrückt! %d, %d\n", keyID, keyState);
-}
-
 void handleResize (GLFWwindow *window,int width,int height) {
-    printf("resize callback called with width = %d, height = %d\n",width, height);
     windowWidth = width;
     windowHeight = height;
     
 //    glfwSetWindowSize(window, width, height);
-    
-    Projection = glm::perspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 100.f);
+    float ratio = (float) windowWidth / (float) windowHeight;
+	DBG("resize callback called with width = %d, height = %d, ratio = %f\n",width, height, ratio);
+    glViewport(0, 0, windowWidth, windowHeight);
+    Projection = glm::perspective(45.0f, ratio, 0.1f, 200.0f);
     MVP = Projection * View * Model;
     
 }
