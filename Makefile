@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -Wall -pedantic -std=c++0x -g -static
 PROG = main
 
-SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp DynamicsWorld.cpp
+SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp DynamicsWorld.cpp camera.cpp
 OBJS := $(SRCS:.cpp=.o)
 prereq_files := $(SRCS:.cpp=.d)
 LIBS = -L ./ -lGL -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lglfw

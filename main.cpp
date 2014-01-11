@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "shape.h"
 #include "quad.h"
+#include "camera.h"
 #include "DynamicsWorld.h"
 #include <iostream>
 #include <stdio.h>
@@ -20,7 +21,7 @@
 
 #if 1
 
-#define NUM_QUADS 500
+#define NUM_QUADS 600
 
 GLuint vbuffer, colorBuffer;
 GLuint VertexArrayID;
@@ -51,85 +52,52 @@ float posY = 0.0f;
 
 float posZ = -70.0;
 
-#define ROT_SPEED 5.0f;
-
-float rotX = 0.0f;
-float rotY = 0.0f;
-
-glm::mat4 Projection = glm::perspective(45.0f, (float)windowWidth/(float)windowHeight, 0.1f, 200.f);
-
-glm::mat4 ViewRotateX = glm::rotate(glm::mat4(1.0f), rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-glm::mat4 ViewRotateXY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-glm::mat4 View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
-
-glm::mat4 Model = glm::scale(glm::mat4(1.0f),glm::vec3(0.5f));
-
-glm::vec4 zUnityVector(0, 0, 1, 0);
-glm::vec4 yUnityVector(0,-1,0,0);
-glm::vec4 xUnityVector(1,0,0,0);
+#define ROT_SPEED 5.0f
+#define MOVE_SPEED 2.0f
 
 
-glm::vec4 viewVector (0,0,1,0);
-
-glm::mat4 MVP = Projection * View * Model;
+Camera camera;
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+
     if ((key==GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT || key == GLFW_KEY_UP || key == GLFW_KEY_DOWN || key == GLFW_KEY_A || key == GLFW_KEY_D) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
         if (key==GLFW_KEY_W || key==GLFW_KEY_S ) {
-			glm::vec4 posVec = zUnityVector * ViewRotateXY;
 			
 			if (key==GLFW_KEY_W) {
-				posX += posVec.x;
-				posY += posVec.y;
-            	posZ += posVec.z;
+				camera.moveForward(MOVE_SPEED);
 			}
 			else {
-				posX -= posVec.x;
-				posY -= posVec.y;
-            	posZ -= posVec.z;
+				camera.moveForward(-MOVE_SPEED);
 			}
+
         }
 		else if (key==GLFW_KEY_A || key==GLFW_KEY_D) {
-			glm::vec4 posVec = xUnityVector * ViewRotateXY;
 			
-			float factor = 1.0f;
-			if (key==GLFW_KEY_D) factor = -1.0f; 		
-			
-			posX += factor * posVec.x;
-			posY += factor * posVec.y;
-            posZ += factor * posVec.z;
+			if (key==GLFW_KEY_D) {
+				camera.moveSideward(-MOVE_SPEED);
+			} 		
+			else {
+				camera.moveSideward(MOVE_SPEED);
+			}
+
 		}
-		
+
 		else if(key == GLFW_KEY_RIGHT) {
-			rotY += ROT_SPEED;
+			camera.incRotateY( ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			rotY -= ROT_SPEED;
+			camera.incRotateY( -1 * ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_UP) {
-			rotX -=	ROT_SPEED;	
+			camera.incRotateX( -1 * ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			rotX += ROT_SPEED;
-		}
-		
-		
-		DBG("rotY = %f, rotX = %f", rotY, rotX);
-
-		if (key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT || key ==  GLFW_KEY_UP || key ==  GLFW_KEY_DOWN) {
-  			ViewRotateX = glm::rotate(glm::mat4(1.0f), rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-			ViewRotateXY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
-			View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
-		}
-		
-		else if (key==GLFW_KEY_W || key==GLFW_KEY_S || key==GLFW_KEY_A || key==GLFW_KEY_D) {
-			View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
+			camera.incRotateX(  ROT_SPEED );
 		}
 
-         MVP = Projection * View * Model;
     }
 }
 
@@ -137,13 +105,8 @@ void handleResize (GLFWwindow *window,int width,int height) {
     windowWidth = width;
     windowHeight = height;
     
-//    glfwSetWindowSize(window, width, height);
-    float ratio = (float) windowWidth / (float) windowHeight;
-	DBG("resize callback called with width = %d, height = %d, ratio = %f\n",width, height, ratio);
-    glViewport(0, 0, windowWidth, windowHeight);
-    Projection = glm::perspective(45.0f, ratio, 0.1f, 200.0f);
-    MVP = Projection * View * Model;
-    
+	glViewport(0, 0, windowWidth, windowHeight);
+	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 200.0f);
 }
 
 void initPhysics() {
@@ -154,7 +117,8 @@ void initPhysics() {
     float mass = 1.0;
     
 	for (int i = 0; i < NUM_QUADS; i++) {
-		if (i == 40) mass = 3.5f;
+		if (i <= 60) mass = 3.5f;
+		else mass = 0.1f;
 		Quad *myQuad = quads[i];
 		myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), mass);
 	}
@@ -162,46 +126,7 @@ void initPhysics() {
 
 void initializeOpenGL() {
 
-	
-	/* Vertex Buffer anlegen und anschließend an OpenGL binden (wg. State-Machine)
-		anschließend werden die Buffer-Daten übergeben durch glBufferData. */
-//	glGenBuffers (1, &vbuffer);
-//	glBindBuffer (GL_ARRAY_BUFFER, vbuffer);
-//	glBufferData (GL_ARRAY_BUFFER, sizeof (points), &points[0], GL_STATIC_DRAW);
-//        
-//        glGenBuffers (1, &colorBuffer);
-//	glBindBuffer (GL_ARRAY_BUFFER, colorBuffer);
-//	glBufferData (GL_ARRAY_BUFFER, sizeof (colours), &colours[0], GL_STATIC_DRAW);
-//        
-//	
-//	glGenVertexArrays (1, &VertexArrayID);
-//	glBindVertexArray (VertexArrayID);
-//	glBindBuffer (GL_ARRAY_BUFFER, vbuffer);
-//	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
-//        glBindBuffer (GL_ARRAY_BUFFER, colorBuffer);
-//	glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
-//
-//        glEnableVertexAttribArray (0);
-//        glEnableVertexAttribArray (1);
-//	
-//	vertexShader = new Shader("example.vertex",  GL_VERTEX_SHADER);
-//	fragmentShader = new Shader("example.frag",  GL_FRAGMENT_SHADER);
-	
-	
-//	shaderProgrammeID = glCreateProgram ();
-//	glAttachShader (shaderProgrammeID, fragmentShader->getID());
-//	glAttachShader (shaderProgrammeID, vertexShader->getID());
-//	glLinkProgram (shaderProgrammeID);
-//                
-//        createZRotMatrix(matrix, 0);
-//        
-//        matrix_location = glGetUniformLocation (shaderProgrammeID, "matrix");
-//        glUseProgram (shaderProgrammeID);
-//        glUniformMatrix4fv (matrix_location, 1, GL_FALSE, matrix);
-//        
-//        mvp_location = glGetUniformLocation (shaderProgrammeID, "mvp");
-//        glUseProgram (shaderProgrammeID);
-//        glUniformMatrix4fv (mvp_location, 1, GL_FALSE, matrix);
+	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 200.0f);
 
     glEnable ( GL_DEPTH_TEST ); 
     double xVal = 0.0f;
@@ -209,11 +134,11 @@ void initializeOpenGL() {
     double baseX = 0.00f;
     double t = 0.00;
     
-    for (int i = 0; i < 40; i++) {
-        if (i < 20)
-            quads[i] = new Quad(xVal+1.0f+i*3.0f, 100.0f, 350.0f);
+    for (int i = 0; i < 60; i++) {
+        if (i < 30)
+            quads[i] = new Quad(xVal+1.0f+i*3.0f, 270.0f, 350.0f);
         else
-            quads[i] = new Quad(xVal+1.0f+(i-20)*3.0f, 70.0f, 350.0f);
+            quads[i] = new Quad(xVal+1.0f+(i-20)*3.0f, 260.0f, 350.0f);
     }
     
     
@@ -383,7 +308,7 @@ int main(int argc, char** argv) {
                 glUseProgram (quads[0]->shaderProgrammeID);
                 for (int i = 0; i < NUM_QUADS; i++) {
                     
-                    glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(MVP));
+                    glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(camera.getMVP()));
                     quads[i]->draw();
                 }
                 
