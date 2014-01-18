@@ -21,14 +21,14 @@
 
 #if 1
 
-#define NUM_QUADS 600
+#define NUM_QUADS 400
 
 GLuint vbuffer, colorBuffer;
 GLuint VertexArrayID;
 Shader *vertexShader, *fragmentShader; 
 GLuint shaderProgrammeID ;
 int matrix_location, mvp_location = 0;
-Quad *quads[NUM_QUADS];
+Quad *quads[NUM_QUADS+100];
 
 
 int windowWidth = 1200, windowHeight = 900;
@@ -40,6 +40,8 @@ GLchar errorBuffer[1000];
 DynamicsWorld myWorld;
 btDynamicsWorld *m_dynamicsWorld;
 
+int numExtraQuads = 0;
+
 
 
 Logger* Logger::instance = NULL;
@@ -47,66 +49,73 @@ Logger* Logger::instance = NULL;
 
 GLFWwindow* window;
 
-float posX = 0.0f;
-float posY = 0.0f;
-
-float posZ = -70.0;
-
 #define ROT_SPEED 5.0f
 #define MOVE_SPEED 2.0f
 
 
 Camera camera;
 
+static bool isKeyPressed (int *keysToCheck, int numKeys, int key) {
+	for (int i = 0; i < numKeys; i++) {
+		if (keysToCheck[i] == key) return true;
+	}
+	return false;
+}
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	static int CAMERA_KEYS[] = {GLFW_KEY_W, GLFW_KEY_S , GLFW_KEY_RIGHT, GLFW_KEY_LEFT, GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_A, GLFW_KEY_D,  GLFW_KEY_F };
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
-    if ((key==GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_RIGHT || key == GLFW_KEY_LEFT || key == GLFW_KEY_UP || key == GLFW_KEY_DOWN || key == GLFW_KEY_A || key == GLFW_KEY_D) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        if (key==GLFW_KEY_W || key==GLFW_KEY_S ) {
-			
-			if (key==GLFW_KEY_W) {
-				camera.moveForward(MOVE_SPEED);
-			}
-			else {
-				camera.moveForward(-MOVE_SPEED);
-			}
-
+    if ((isKeyPressed(CAMERA_KEYS, sizeof(CAMERA_KEYS) / sizeof(int), key)) && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+        if (key==GLFW_KEY_W) {
+			camera.moveForward(-MOVE_SPEED);
         }
-		else if (key==GLFW_KEY_A || key==GLFW_KEY_D) {
-			
-			if (key==GLFW_KEY_D) {
-				camera.moveSideward(-MOVE_SPEED);
-			} 		
-			else {
+		else if (key==GLFW_KEY_S) {
+			camera.moveForward(MOVE_SPEED);
+		}
+		else if (key==GLFW_KEY_D) {
 				camera.moveSideward(MOVE_SPEED);
-			}
-
+		}
+		else if (key==GLFW_KEY_A) {
+			camera.moveSideward(-MOVE_SPEED);
 		}
 
 		else if(key == GLFW_KEY_RIGHT) {
 			camera.incRotateY( ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			camera.incRotateY( -1 * ROT_SPEED );
+			camera.incRotateY( -ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_UP) {
-			camera.incRotateX( -1 * ROT_SPEED );
+			camera.incRotateX( -ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_DOWN) {
 			camera.incRotateX(  ROT_SPEED );
 		}
+		else if (key == GLFW_KEY_F) {
+			vec4 posVec = vec4(0.0f, 0.0f, 5.0f, 0.0f) * camera.getViewRotateXY();
+			posVec = posVec * -20;
+			DBG("adding at x=%f, y=%f, z=%f", camera.getX(), camera.getY(), camera.getZ());
+			quads[NUM_QUADS+numExtraQuads] = new Quad(camera.getX(), camera.getY(), camera.getZ());
+			Quad *myQuad = quads[NUM_QUADS+numExtraQuads];
+			myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), 1.0f);
+			myWorld.setSpeed(NUM_QUADS+numExtraQuads, posVec.x, posVec.y, posVec.z);
+			numExtraQuads++;
+		}
 
     }
 }
+
+
 
 void handleResize (GLFWwindow *window,int width,int height) {
     windowWidth = width;
     windowHeight = height;
     
 	glViewport(0, 0, windowWidth, windowHeight);
-	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 200.0f);
+	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 400.0f);
 }
 
 void initPhysics() {
@@ -117,8 +126,7 @@ void initPhysics() {
     float mass = 1.0;
     
 	for (int i = 0; i < NUM_QUADS; i++) {
-		if (i <= 60) mass = 3.5f;
-		else mass = 0.1f;
+		mass = 8.1f;
 		Quad *myQuad = quads[i];
 		myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), mass);
 	}
@@ -126,7 +134,7 @@ void initPhysics() {
 
 void initializeOpenGL() {
 
-	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 200.0f);
+	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 400.0f);
 
     glEnable ( GL_DEPTH_TEST ); 
     double xVal = 0.0f;
@@ -134,15 +142,7 @@ void initializeOpenGL() {
     double baseX = 0.00f;
     double t = 0.00;
     
-    for (int i = 0; i < 60; i++) {
-        if (i < 30)
-            quads[i] = new Quad(xVal+1.0f+i*3.0f, 270.0f, 350.0f);
-        else
-            quads[i] = new Quad(xVal+1.0f+(i-20)*3.0f, 260.0f, 350.0f);
-    }
-    
-    
-    for (int i = 40; i < NUM_QUADS; i++) {
+    for (int i = 0; i < NUM_QUADS; i++) {
         t = -1 + 2 * ((float) (i / (float) NUM_QUADS));
         
         //        quads[i]->setColor(r,g,b);
@@ -154,12 +154,8 @@ void initializeOpenGL() {
         xVal += 3.5f;
         quads[i] = new Quad(xVal, yVal, 3.0f);
     }
-    initPhysics();
-   
-        
-        
-//          glUniformMatrix4fv(Quad::mvp_location, 1, GL_FALE, glm::value_ptr(MVP));
-	
+
+	initPhysics();
 }
 
 void _update_fps_counter () {
@@ -244,7 +240,7 @@ int main(int argc, char** argv) {
 	while( !glfwWindowShouldClose(window) )
 	{
                 _update_fps_counter ();
-                
+
                 static double previous_seconds = glfwGetTime ();
                 double current_seconds = glfwGetTime ();
                 double elapsed_seconds = current_seconds - previous_seconds;
@@ -270,24 +266,26 @@ int main(int argc, char** argv) {
                 ///step the simulation
                 if (m_dynamicsWorld)
                 {
-                    for (int i = 0; i < 40; i++)
-                        myWorld.getBody(i)->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
+                    //for (int i = 0; i < 60; i++)
+                    //    myWorld.getBody(i)->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
 //                         printf("elapsed %f ms!\n", ms);
                         m_dynamicsWorld->stepSimulation(ms);
                         //optional but useful: debug drawing
 //                        m_dynamicsWorld->debugDrawWorld();
                 }
-                
-                for(int i=0;i<NUM_QUADS;i++) {
+
+				btScalar	m[16];		
+
+                for(int i=0;i<NUM_QUADS + numExtraQuads;i++) {
                     btCollisionObject *colObj=m_dynamicsWorld->getCollisionObjectArray()[i+1];
                     btRigidBody*		body=btRigidBody::upcast(colObj);
-                    if (i == 0) body->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.0f), btScalar(0.01f)));
-                    btScalar	m[16];
+
+                			
                     
                     if(body&&body->getMotionState())
                     {
                             btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
-                            btVector3 origin = myMotionState->m_graphicsWorldTrans.getOrigin();
+                            //btVector3 origin = myMotionState->m_graphicsWorldTrans.getOrigin();
 //                            quads[i]->setPos(origin.getX(), origin.getY(), origin.getZ());
                             myMotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
                             quads[i]->setMatrix(m);
@@ -301,12 +299,12 @@ int main(int argc, char** argv) {
 //                            rot=colObj->getWorldTransform().getBasis();
                     }
                 }
-                
+
 //		glUseProgram (shaderProgrammeID);
 //		glBindVertexArray (VertexArrayID);
 //		glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
                 glUseProgram (quads[0]->shaderProgrammeID);
-                for (int i = 0; i < NUM_QUADS; i++) {
+                for (int i = 0; i < NUM_QUADS + numExtraQuads; i++) {
                     
                     glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(camera.getMVP()));
                     quads[i]->draw();

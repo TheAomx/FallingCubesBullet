@@ -5,6 +5,23 @@
 #include <vector>
 #include "BulletDynamics/btBulletDynamicsCommon.h"
 
+#if 0
+#define PARALLEL 1
+#define MAX_TASKS 4
+
+#include "BulletMultiThreaded/SpuGatheringCollisionDispatcher.h"
+#include "BulletMultiThreaded/PlatformDefinitions.h"
+
+#include "BulletMultiThreaded/PosixThreadSupport.h"
+#include "BulletMultiThreaded/SpuNarrowPhaseCollisionTask/SpuGatheringCollisionTask.h"
+
+#include "BulletMultiThreaded/btParallelConstraintSolver.h"
+#include "BulletMultiThreaded/SequentialThreadSupport.h"
+
+class	btThreadSupportInterface;
+
+#endif
+
 using namespace std;
 
 class DynamicsWorld {
@@ -19,9 +36,23 @@ class DynamicsWorld {
 		btRigidBody* getBody(int i);
 		int addRigidShape(btCollisionShape *shape, float x, float y, float z, float mass = 1.0f);
 		int addRigidQuad(float x, float y, float z, float mass = 1.0f);
+		void setSpeed(int i, float speedX, float speedY, float speedZ);
 
     private:
 		btDynamicsWorld *m_dynamicsWorld;		
+#ifdef PARALLEL
+		class	btThreadSupportInterface *m_threadSupportSolver;
+		btThreadSupportInterface* createSolverThreadSupport(int maxNumThreads)
+		{
+
+			PosixThreadSupport::ThreadConstructionInfo solverConstructionInfo("solver", SolverThreadFunc,
+																			  SolverlsMemoryFunc, maxNumThreads);
+	
+			PosixThreadSupport* threadSupport = new PosixThreadSupport(solverConstructionInfo);
+
+			return threadSupport;
+		}
+#endif
 		btDefaultCollisionConfiguration *m_collisionConfiguration;
 		btCollisionDispatcher *m_dispatcher;
 		btBroadphaseInterface *m_broadphase;

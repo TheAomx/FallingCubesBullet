@@ -2,6 +2,7 @@
 
 #define SCALING 2.0f
 
+
 DynamicsWorld::DynamicsWorld () {
 	cout << "dynamics world construktor" << endl;
 }
@@ -24,8 +25,12 @@ void DynamicsWorld::initWorld () {
 	m_dispatcher = new	btCollisionDispatcher(m_collisionConfiguration);
 	m_broadphase = new btDbvtBroadphase();
 
+#ifdef PARALLEL
+	m_threadSupportSolver = createSolverThreadSupport(MAX_TASKS);
+	m_solver = new btParallelConstraintSolver(m_threadSupportSolver);
+#else
 	m_solver = new btSequentialImpulseConstraintSolver;
-
+#endif
 	m_dynamicsWorld = new btDiscreteDynamicsWorld(m_dispatcher,m_broadphase,m_solver,m_collisionConfiguration);
 	//    m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
 
@@ -85,6 +90,10 @@ int DynamicsWorld::addRigidShape(btCollisionShape *shape, float x, float y, floa
 	this->addRigidBody(b);
 	return 1;
 } 
+
+void DynamicsWorld::setSpeed(int i, float speedX, float speedY, float speedZ) {
+	rigidBodies.at(i)->setLinearVelocity(btVector3(speedX, speedY, speedZ));
+}
 
 int DynamicsWorld::addRigidQuad(float x, float y, float z, float mass) {
 	

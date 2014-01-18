@@ -101,7 +101,7 @@ Quad::Quad(float x, float y, float z) {
 
     DBG("mvp was %d", mvp_location);
 
-//    trans_location = glGetUniformLocation (shaderProgrammeID, "trans");
+   trans_location = glGetUniformLocation (shaderProgrammeID, "trans");
 //    glUniformMatrix4fv (trans_location, 1, GL_FALSE, glm::value_ptr(this->MVP));
         
         DBG("trans was %d",  trans_location );
