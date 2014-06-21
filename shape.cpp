@@ -24,9 +24,9 @@ void Shape::setRotateValues(float rotX, float rotY, float rotZ) {
     
 //    DBG("rotateX = %f, rotateY = %f, rotateZ = %f", rotateX, rotateY, rotateZ);
     
-    ViewRotateX = glm::rotate(ViewTranslate, rotateX, glm::vec3(1.0f, 0.0f, 0.0f));
-    ViewRotateY = glm::rotate(ViewRotateX, rotateY, glm::vec3(0.0f, 1.0f, 0.0f));
-    ViewRotateZ = glm::rotate(ViewRotateY, rotateZ, glm::vec3(0.0f, 0.0f, 1.0f));
+    ViewRotateX = glm::rotate(ViewTranslate,  glm::radians(rotateX), glm::vec3(1.0f, 0.0f, 0.0f));
+    ViewRotateY = glm::rotate(ViewRotateX,  glm::radians(rotateY), glm::vec3(0.0f, 1.0f, 0.0f));
+    ViewRotateZ = glm::rotate(ViewRotateY,  glm::radians(rotateZ), glm::vec3(0.0f, 0.0f, 1.0f));
     adjustMatrices();
 }
 

@@ -1,8 +1,5 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "BulletDynamics/btBulletDynamicsCommon.h"
 #include "header.h"
 #include "Shader.hpp"
@@ -21,7 +18,7 @@
 
 #if 1
 
-#define NUM_QUADS 400
+#define NUM_QUADS 800
 
 GLuint vbuffer, colorBuffer;
 GLuint VertexArrayID;
@@ -96,7 +93,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		}
 		else if (key == GLFW_KEY_F) {
 			vec4 posVec = vec4(0.0f, 0.0f, 5.0f, 0.0f) * camera.getViewRotateXY();
-			posVec = posVec * -20;
+			posVec = posVec * -20.0f;
 			DBG("adding at x=%f, y=%f, z=%f", camera.getX(), camera.getY(), camera.getZ());
 			quads[NUM_QUADS+numExtraQuads] = new Quad(camera.getX(), camera.getY(), camera.getZ());
 			Quad *myQuad = quads[NUM_QUADS+numExtraQuads];
@@ -259,7 +256,7 @@ int main(int argc, char** argv) {
 //                glUseProgram (shaderProgrammeID);
 //                glUniformMatrix4fv (matrix_location, 1, GL_FALSE, matrix);
 //                
-		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 //simple dynamics world doesn't handle fixed-time-stepping
                 float ms = elapsed_seconds;
 

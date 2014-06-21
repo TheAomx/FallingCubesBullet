@@ -9,8 +9,8 @@ Camera::Camera() {
 	setPos(0.0f, 0.0f, 70.0f);
 	setPerspective(45.0f, 1.0f, 0.1f, 200.0f );
 	
-	ViewRotateX = glm::rotate(glm::mat4(1.0f), rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-	ViewRotateXY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+	ViewRotateX = glm::rotate(glm::mat4(1.0f), glm::radians(rotX), glm::vec3(1.0f, 0.0f, 0.0f));
+	ViewRotateXY = glm::rotate(ViewRotateX, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
 	View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
 	Model = glm::scale(glm::mat4(1.0f),glm::vec3(1.0f));
 	
@@ -98,8 +98,8 @@ void Camera::recalcView() {
 }
 
 void Camera::recalcRotateView() {
-	ViewRotateX = glm::rotate(glm::mat4(1.0f), rotX, glm::vec3(1.0f, 0.0f, 0.0f));
-	ViewRotateXY = glm::rotate(ViewRotateX, rotY, glm::vec3(0.0f, 1.0f, 0.0f));
+	ViewRotateX = glm::rotate(glm::mat4(1.0f), glm::radians(rotX), glm::vec3(1.0f, 0.0f, 0.0f));
+	ViewRotateXY = glm::rotate(ViewRotateX, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
 	View = glm::translate(ViewRotateXY,glm::vec3(-posX, -posY, -posZ));
 	
 	MVP = Projection * View * Model;
