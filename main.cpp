@@ -25,7 +25,9 @@ GLuint VertexArrayID;
 Shader *vertexShader, *fragmentShader; 
 GLuint shaderProgrammeID ;
 int matrix_location, mvp_location = 0;
-Quad *quads[NUM_QUADS+100];
+int numReservedQuads = NUM_QUADS + 100;
+int currentQuad = 0;
+Quad **quads;
 
 
 int windowWidth = 1200, windowHeight = 900;
@@ -57,6 +59,24 @@ static bool isKeyPressed (int *keysToCheck, int numKeys, int key) {
 		if (keysToCheck[i] == key) return true;
 	}
 	return false;
+}
+
+
+void addQuad(float posX, float posY, float posZ, vec4 speedVec ) {
+	if (currentQuad == numReservedQuads) {
+		numReservedQuads += 100;
+		quads = (Quad**) realloc(quads, sizeof(Quad*) * numReservedQuads);
+	}
+
+
+	
+	quads[currentQuad] = new Quad(posX, posY, posZ);
+	Quad *myQuad = quads[currentQuad];
+
+	myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), 1.0f);	
+	myWorld.setSpeed(currentQuad+1, speedVec.x, speedVec.y, speedVec.z);
+	currentQuad++;
+
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -92,14 +112,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			camera.incRotateX(  ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_F) {
+			
 			vec4 posVec = vec4(0.0f, 0.0f, 5.0f, 0.0f) * camera.getViewRotateXY();
 			posVec = posVec * -20.0f;
 			DBG("adding at x=%f, y=%f, z=%f", camera.getX(), camera.getY(), camera.getZ());
-			quads[NUM_QUADS+numExtraQuads] = new Quad(camera.getX(), camera.getY(), camera.getZ());
-			Quad *myQuad = quads[NUM_QUADS+numExtraQuads];
-			myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), 1.0f);
-			myWorld.setSpeed(NUM_QUADS+numExtraQuads, posVec.x, posVec.y, posVec.z);
-			numExtraQuads++;
+			addQuad(camera.getX(), camera.getY(), camera.getZ(), posVec);	
+			
+			
 		}
 
     }
@@ -119,14 +138,6 @@ void initPhysics() {
     
 	myWorld.initWorld();
 	m_dynamicsWorld = myWorld.getWorld();
-    
-    float mass = 1.0;
-    
-	for (int i = 0; i < NUM_QUADS; i++) {
-		mass = 8.1f;
-		Quad *myQuad = quads[i];
-		myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), mass);
-	}
 }
 
 void initializeOpenGL() {
@@ -138,9 +149,16 @@ void initializeOpenGL() {
     double yVal = 30.0f;
     double baseX = 0.00f;
     double t = 0.00;
+	
+	quads = (Quad**) malloc(sizeof(Quad*) * numReservedQuads);
+
+	vec4 vec = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	
+	addQuad(0.0f, -50.0f, 0.0f, vec );
+
     
     for (int i = 0; i < NUM_QUADS; i++) {
-        t = -1 + 2 * ((float) (i / (float) NUM_QUADS));
+        t = -1 + 2 * ((float) (currentQuad / (float) NUM_QUADS));
         
         //        quads[i]->setColor(r,g,b);
         //        xVal = 5.00;
@@ -149,10 +167,10 @@ void initializeOpenGL() {
             yVal += 4.00f;
         }
         xVal += 3.5f;
-        quads[i] = new Quad(xVal, yVal, 3.0f);
+		addQuad(xVal, yVal, 3.0f, vec);
     }
 
-	initPhysics();
+	
 }
 
 void _update_fps_counter () {
@@ -217,100 +235,69 @@ int main(int argc, char** argv) {
 	printf("OpenGL Version: %d %s\n",GL_VERSION, glGetString(GL_VERSION));
         
 
-        int count = 0;
-        GLFWmonitor *mainMonitor = glfwGetPrimaryMonitor();
+    int count = 0;
+    GLFWmonitor *mainMonitor = glfwGetPrimaryMonitor();
 
-        const GLFWvidmode *list =  glfwGetVideoModes(mainMonitor, &count);
-        cout << "-------------------------------------------------------------------\n";
-        cout << "Available Video Modes:\n";
-        for (int i = 0; i < count; i++) {
-          cout << list[i].width << "*" << list[i].height << " @ (" << list[i].redBits << "," << list[i].greenBits << "," << list[i].blueBits << ") RGB bits\n";
-        }
-        cout << "-------------------------------------------------------------------\n";
+    const GLFWvidmode *list =  glfwGetVideoModes(mainMonitor, &count);
+    cout << "-------------------------------------------------------------------\n";
+    cout << "Available Video Modes:\n";
+    for (int i = 0; i < count; i++) {
+      cout << list[i].width << "*" << list[i].height << " @ (" << list[i].redBits << "," << list[i].greenBits << "," << list[i].blueBits << ") RGB bits\n";
+    }
+    cout << "-------------------------------------------------------------------\n";
 
 	
-	
+	initPhysics();
 	initializeOpenGL();
         float speed = 1.0f; // move at 1 unit per second
         float last_position = 0.0f;
         
 	while( !glfwWindowShouldClose(window) )
 	{
-                _update_fps_counter ();
+		_update_fps_counter ();
 
-                static double previous_seconds = glfwGetTime ();
-                double current_seconds = glfwGetTime ();
-                double elapsed_seconds = current_seconds - previous_seconds;
-                previous_seconds = current_seconds;
-                
-                // reverse direction when going to far left or right
-//                if (fabs(last_position) > 1.0f) {
-//                  speed = -speed;
-//                }
+		static double previous_seconds = glfwGetTime ();
+		double current_seconds = glfwGetTime ();
+		double elapsed_seconds = current_seconds - previous_seconds;
+		previous_seconds = current_seconds;
 
-                // update the matrix
-//                float angle = elapsed_seconds * speed + last_position;
-//                createZRotMatrix(matrix, elapsed_seconds * speed + last_position);
-//                last_position = angle;)
-//                
-//                glUseProgram (shaderProgrammeID);
-//                glUniformMatrix4fv (matrix_location, 1, GL_FALSE, matrix);
-//                
-				glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                //simple dynamics world doesn't handle fixed-time-stepping
-                float ms = elapsed_seconds;
+		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//simple dynamics world doesn't handle fixed-time-stepping
+		float ms = elapsed_seconds;
 
-                ///step the simulation
-                if (m_dynamicsWorld)
-                {
-                    //for (int i = 0; i < 60; i++)
-                    //    myWorld.getBody(i)->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
-//                         printf("elapsed %f ms!\n", ms);
-                        m_dynamicsWorld->stepSimulation(ms);
-                        //optional but useful: debug drawing
-//                        m_dynamicsWorld->debugDrawWorld();
-                }
+		///step the simulation
+		if (m_dynamicsWorld)
+		{
+			//for (int i = 0; i < 60; i++)
+			//    myWorld.getBody(i)->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
+			//
+			m_dynamicsWorld->stepSimulation(ms);
+				//optional but useful: debug drawing
+			//                        m_dynamicsWorld->debugDrawWorld();
+		}
 
-				btScalar	m[16];		
 
-                for(int i=0;i<NUM_QUADS + numExtraQuads;i++) {
-                    btCollisionObject *colObj=m_dynamicsWorld->getCollisionObjectArray()[i+1];
-                    btRigidBody*		body=btRigidBody::upcast(colObj);
+		btScalar	m[16];		
 
-                			
-                    
-                    if(body&&body->getMotionState())
-                    {
-                            btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
-                            //btVector3 origin = myMotionState->m_graphicsWorldTrans.getOrigin();
-//                            quads[i]->setPos(origin.getX(), origin.getY(), origin.getZ());
-                            myMotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
-                            quads[i]->setMatrix(m);
-//                            rot=myMotionState->m_graphicsWorldTrans.getBasis(initi);
-                    }
-                    else
-                    {
-//                        printf("blb");
-                            colObj->getWorldTransform().getOpenGLMatrix(m);
-                            quads[i]->setMatrix(m);
-//                            rot=colObj->getWorldTransform().getBasis();
-                    }
-                }
+		for(int i=0;i<currentQuad-1;i++) {
+			btRigidBody*		body =myWorld.getBody(i+2);
+			btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
 
-//		glUseProgram (shaderProgrammeID);
-//		glBindVertexArray (VertexArrayID);
-//		glDrawArrays (GL_TRIANGLE_STRIP, 0, 4);
-                glUseProgram (quads[0]->shaderProgrammeID);
-                for (int i = 0; i < NUM_QUADS + numExtraQuads; i++) {
-                    
-                    glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(camera.getMVP()));
-                    quads[i]->draw();
-                }
-                
+			myMotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
+			quads[i]->setMatrix(m);
+		}
+
+		glUseProgram (quads[0]->shaderProgrammeID);
+
+		for (int i = 0; i < currentQuad; i++) {
+
+			glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(camera.getMVP()));
+			quads[i]->draw();
+		}
+				
 		/*  Swap front and back rendering buffers*/
 		glfwSwapBuffers(window);
-                glfwPollEvents();
-		/*printf("drawed!\n");*/
+		glfwPollEvents();
 		/*glfwSleep(0.001);*/
 	}
 
