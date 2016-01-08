@@ -38,6 +38,7 @@ class DynamicsWorld {
 		int addRigidQuad(btVector3 pos, float mass = 1.0f); 
 		void setSpeed(int i, btVector3 speed);
 		void stepSimulation (float ms);
+		void clear();
 
     private:
 		btRigidBody* createRigidBody(btCollisionShape *shape, btVector3 pos, float mass);

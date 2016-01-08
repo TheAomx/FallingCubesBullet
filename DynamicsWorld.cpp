@@ -28,7 +28,7 @@ void DynamicsWorld::initWorld() {
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 	//    m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
 
-	dynamicsWorld->setGravity(btVector3(0, -1, 0));
+	dynamicsWorld->setGravity(btVector3(0, -0.1, 0));
 	startTransform.setIdentity();
 
 	//create a few basic rigid bodies
@@ -92,3 +92,10 @@ void DynamicsWorld::stepSimulation(float ms) {
 	dynamicsWorld->stepSimulation(ms);
 }
 
+void DynamicsWorld::clear() {
+	for (auto body : rigidBodies) {
+		dynamicsWorld->removeRigidBody(body);
+		delete body;
+	}
+	rigidBodies.clear();
+}

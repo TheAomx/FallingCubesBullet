@@ -2,6 +2,7 @@
 #define QUAD_H
 
 #include <GL/glew.h>
+#include <memory>
 #include "shape.h"
 #include "Shader.hpp"
 
@@ -13,14 +14,14 @@ class Quad : public Shape {
         void setScaling(float x = 1.00f, float y = 1.0f, float z = 1.0f);
         void draw();
         void update();
-    public:
+	int mvp_location, trans_location, time_location;
+	 
+    private:
+	void initShaders();
         float scaleFactorX, scaleFactorY, scaleFactorZ;
         static GLuint vbuffer, VertexArrayID;
         GLuint shaderProgrammeID;
-        static Shader *vertexShader,  *fragmentShader; 
-        int mvp_location, trans_location, time_location;
-//        MovementBehaviour *movement;
-
+        static std::unique_ptr<Shader> vertexShader, fragmentShader; 
 };
 
 #endif // QUAD_H

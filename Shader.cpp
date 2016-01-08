@@ -1,8 +1,7 @@
 #include "Shader.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <iostream>
+#include <fstream>
 #include <new>
 #include "header.h"
 
@@ -18,7 +17,7 @@ Shader::Shader(std::string fileName, GLint type) {
 	this->name = fileName;
 	loadFile(fileName.c_str());
 	this->shaderID = glCreateShader(type);
-	const char *p = this->shaderContent;
+	const char *p = this->shaderContent.c_str();
 	glShaderSource(this->shaderID, 1, &p, NULL);
 
 	glCompileShader(this->shaderID);
@@ -38,28 +37,12 @@ GLuint Shader::getID() {
 }
 
 bool Shader::loadFile(const char *fileName) {
-	FILE *myFile;
-	long lSize;
-	size_t result;
-
-	myFile = fopen(fileName, "r");
-	string fname = fileName;
-	if (myFile == NULL) throw FatalException("file " + fname + " could not be found!");
-	// obtain file size:
-	fseek(myFile, 0, SEEK_END);
-	lSize = ftell(myFile);
-	rewind(myFile);
-
-	// allocate memory to contain the whole file:
-	this->shaderContent = (char*) malloc(sizeof(char)*(lSize + 1));
-	if (this->shaderContent == NULL) throw new std::bad_alloc();
-	memset(this->shaderContent, 0, sizeof(char)*(lSize + 1));
-
-	result = fread(this->shaderContent, 1, lSize, myFile);
-	this->shaderContent[lSize] = (char) 0;
-
-	fclose(myFile);
-
+	std::ifstream in (fileName, std::ios::in | std::ios::binary);
+	
+	in.seekg(0, std::ios::end);
+	shaderContent.resize(in.tellg());
+	in.seekg(0, std::ios::beg);
+	in.read(&shaderContent[0], shaderContent.size());
+	
 	return true;
-
 }

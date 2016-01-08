@@ -45,13 +45,18 @@ static bool isKeyPressed(int *keysToCheck, int numKeys, int key) {
 }
 
 void addQuad(float posX, float posY, float posZ, vec4 speedVec, float mass = 1.0f) {
-	static int addedQuads = 0;
+	unsigned int addedQuads = quads.size();
 	Quad quad(posX, posY, posZ);
 	quads.push_back(quad);
 
 	myWorld.addRigidQuad(btVector3(quad.getX(), quad.getY(), quad.getZ()), mass);
 	myWorld.setSpeed(addedQuads, btVector3(speedVec.x, speedVec.y, speedVec.z));
 	addedQuads++;
+}
+
+void clearAllQuads() {
+	quads.clear();
+	myWorld.clear();
 }
 
 void letQuadBlockFallDown() {
@@ -72,7 +77,9 @@ void letQuadBlockFallDown() {
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	static int CAMERA_KEYS[] = {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_RIGHT, GLFW_KEY_LEFT, GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_F, GLFW_KEY_G};
+	static int CAMERA_KEYS[] = {GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_RIGHT, GLFW_KEY_LEFT, 
+	GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_F, GLFW_KEY_G,
+	GLFW_KEY_SPACE};
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 
@@ -101,6 +108,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		case GLFW_KEY_DOWN:
 			camera.incRotateX(ROT_SPEED);
+			break;
+		case GLFW_KEY_SPACE:
+			clearAllQuads();
 			break;
 		case GLFW_KEY_F:
 		{
