@@ -31,12 +31,12 @@ void Shape::setRotateValues(float rotX, float rotY, float rotZ) {
 }
 
 void Shape::setMatrix(btScalar *mat) {
-    
+	// TODO: why does std::copy not work in this case?	
+	//std::copy(&m[0], &m[15], mat);
+
     for (int i = 0; i < 16; i++) {
-//        printf("m[%d] = %f",i,mat[i]);
         this->m[i] = mat[i];
     }
-//    printf("\n");
 }
 
 float Shape::getRotateValueX() {
@@ -71,7 +71,6 @@ void Shape::setPos(float x, float y, float z) {
     ViewTranslate = glm::translate(glm::mat4(1.0f),glm::vec3(x, y, z));
     setRotateValues(getRotateValueX(), getRotateValueY(), getRotateValueZ());
     adjustMatrices();
-    
 }
 
 float Shape::getSpeedX() {

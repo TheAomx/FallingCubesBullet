@@ -42,28 +42,21 @@ static const float cubeVerticesStrip[] = {
 
 Quad::Quad(float x, float y, float z) {
     setPos(x,y,z);
-    
-   
-    
-    
-    
+
     if (Quad::vbuffer == 0) {
         glGenBuffers (1, &Quad::vbuffer);
-	glBindBuffer (GL_ARRAY_BUFFER, Quad::vbuffer);
-	glBufferData (GL_ARRAY_BUFFER, sizeof (cubeVerticesStrip), &cubeVerticesStrip[0], GL_STATIC_DRAW);
+	    glBindBuffer (GL_ARRAY_BUFFER, Quad::vbuffer);
+	    glBufferData (GL_ARRAY_BUFFER, sizeof (cubeVerticesStrip), &cubeVerticesStrip[0], GL_STATIC_DRAW);
         
         glGenVertexArrays (1, &Quad::VertexArrayID);
-	glBindVertexArray (Quad::VertexArrayID);
-	glBindBuffer (GL_ARRAY_BUFFER, Quad::vbuffer);
-	glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+	    glBindVertexArray (Quad::VertexArrayID);
+	    glBindBuffer (GL_ARRAY_BUFFER, Quad::vbuffer);
+	    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
         
         glEnableVertexAttribArray (0);
-       
-        
+
         Quad::vertexShader = new Shader("quad.vertex",  GL_VERTEX_SHADER);
         Quad::fragmentShader = new Shader("quad.frag",  GL_FRAGMENT_SHADER);
-        
-        
     }
     
     glGenBuffers (1, &colorBuffer);
@@ -78,7 +71,6 @@ Quad::Quad(float x, float y, float z) {
     DBG("r=%f,g=%f,b=%f",r,g,b);
     
     setColor(1.0f, 0.0f, 0.0f);
-    
     
     glBindBuffer (GL_ARRAY_BUFFER, colorBuffer);
     glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
@@ -123,72 +115,12 @@ void Quad::setScaling(float x, float y, float z) {
 }
 
 void Quad::draw() {
-    
     glUseProgram (Quad::shaderProgrammeID);
-//    if (this->mvp_changed) {
-        trans_location = glGetUniformLocation (shaderProgrammeID, "trans");
-        glUniformMatrix4fv (trans_location, 1, GL_FALSE, this->m);
-//        this->mvp_changed = false;
-//    }
-        
+    trans_location = glGetUniformLocation (shaderProgrammeID, "trans");
+    glUniformMatrix4fv (trans_location, 1, GL_FALSE, this->m);
+
     glBindVertexArray (Quad::VertexArrayID);
     glDrawArrays (GL_TRIANGLE_STRIP, 0, sizeof(cubeVerticesStrip)/sizeof(float));
-
-//    glPushMatrix();
-//    glTranslatef(getX(), getY(), getZ());
-//    glRotatef(getRotateValueZ(), 0.00, 0.00, 1.00);
-//    glRotatef(getRotateValueY(), 0.00f, 1.00f, 0.00f);
-//    glRotatef(getRotateValueX(),1.00f, 0.00, 0.00);
-//    glScalef(this->scaleFactorX, this->scaleFactorY, this->scaleFactorZ);
-
-//    glBegin(GL_QUADS);
-//
-//
-//      glColor3f(0.0f,0.5f,0.0f); 
-//      glNormal3f(0.0, 1.0f, 0.0f);
-//      glVertex3f( 0.5f, 0.5f,-0.5f); // oben rechts (OBEN)
-//      glVertex3f(-0.5f, 0.5f,-0.5f); // oben links (OBEN)
-//      glVertex3f(-0.5f, 0.5f, 0.5f); // unten links (OBEN)
-//      glVertex3f( 0.5f, 0.5f, 0.5f); // unten rechts  (OBEN)
-//
-//       glColor3f(0.5f,0.5f,0.0f); 
-//       glNormal3f(0.0, -1.0f, 0.0f);
-//       glVertex3f( 0.5f,-0.5f, 0.5f); // oben rechts (UNTEN)
-//       glVertex3f(-0.5f,-0.5f, 0.5f); // oben links (UNTEN)
-//       glVertex3f(-0.5f,-0.5f,-0.5f); // unten links (UNTEN)
-//       glVertex3f( 0.5f,-0.5f,-0.5f); // unten rechts  (UNTEN)
-//
-//       glColor3f(0.5f,0.0f,0.0f); 
-//       glNormal3f(0.0, 0.0f, 1.0f);
-//       glVertex3f( 0.5f, 0.5f, 0.5f); // oben rechts (VORNE)
-//       glVertex3f(-0.5f, 0.5f, 0.5f); // oben links (VORNE)
-//       glVertex3f(-0.5f,-0.5f, 0.5f); // unten links (VORNE)
-//       glVertex3f( 0.5f,-0.5f, 0.5f); // unten rechts  (VORNE)
-//
-//       glColor3f(0.5f,0.5f,0.0f); 
-//       glNormal3f(0.0, 0.0f, -1.0f);
-//       glVertex3f( 0.5f,-0.5f,-0.5f); // oben rechts (HINTEN)
-//       glVertex3f(-0.5f,-0.5f,-0.5f); // oben links (HINTEN)
-//       glVertex3f(-0.5f, 0.5f,-0.5f); // unten links (HINTEN)
-//       glVertex3f( 0.5f, 0.5f,-0.5f); // unten rechts  (HINTEN)
-//
-//       glColor3f(0.5f,0.5f,0.5f); 
-//       glNormal3f(-1.0, 0.0f, 0.0f);
-//       glVertex3f(-0.5f, 0.5f, 0.5f); // oben rechts (LINKS)
-//       glVertex3f(-0.5f, 0.5f,-0.5f); // oben links (LINKS)
-//       glVertex3f(-0.5f,-0.5f,-0.5f); // unten links (LINKS)
-//       glVertex3f(-0.5f,-0.5f, 0.5f); // unten rechts  (LINKS)
-//
-//       glColor3f(0.5f,0.0f,0.5f); 
-//       glNormal3f(1.0, 0.0f, 0.0f);
-//       glVertex3f( 0.5f, 0.5f,-0.5f); // oben rechts (RECHTS)
-//       glVertex3f( 0.5f, 0.5f, 0.5f); // oben links (RECHTS)
-//       glVertex3f( 0.5f,-0.5f, 0.5f); // unten links (RECHTS)
-//       glVertex3f( 0.5f,-0.5f,-0.5f); // unten rechts (RECHTS)
-//    glEnd();
-//
-//    glPopMatrix();
-
 }
 
 void Quad::update() {

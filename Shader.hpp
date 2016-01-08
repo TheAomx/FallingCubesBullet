@@ -5,17 +5,14 @@
 
 class Shader {
 	public:
-		Shader(char *fileName, GLint type);
+		Shader(std::string fileName, GLint type);
 		GLuint  getID();
-	
-	
+
 	private:
 		GLuint shaderID;
-		char *name;
+		std::string name;
 		char *shaderContent;
 		static GLchar errorBuffer[1000];
-		
-		bool loadFile(char *fileName);
-
+		bool loadFile(const char *fileName);
 };
 #endif

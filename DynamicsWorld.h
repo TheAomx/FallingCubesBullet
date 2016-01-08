@@ -34,11 +34,13 @@ class DynamicsWorld {
 		int addShape (btCollisionShape *shape);
 		int addRigidBody(btRigidBody *body);
 		btRigidBody* getBody(int i);
-		int addRigidShape(btCollisionShape *shape, float x, float y, float z, float mass = 1.0f);
-		int addRigidQuad(float x, float y, float z, float mass = 1.0f);
-		void setSpeed(int i, float speedX, float speedY, float speedZ);
+		int addRigidShape(btCollisionShape *shape, btVector3 pos, float mass = 1.0f);
+		int addRigidQuad(btVector3 pos, float mass = 1.0f); 
+		void setSpeed(int i, btVector3 speed);
+		void stepSimulation (float ms);
 
     private:
+		btRigidBody* createRigidBody(btCollisionShape *shape, btVector3 pos, float mass);
 		btDynamicsWorld *dynamicsWorld;		
 #ifdef PARALLEL
 		class	btThreadSupportInterface *threadSupportSolver;

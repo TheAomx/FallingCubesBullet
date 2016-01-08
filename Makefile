@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -pedantic -std=gnu++14 -g -static -I /usr/local/include/bullet/ -O2
+CFLAGS = -Wall -std=gnu++14 -g -static -I /usr/local/include/bullet/ -Os
 PROG = main
 
 SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp DynamicsWorld.cpp camera.cpp
