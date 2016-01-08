@@ -1,10 +1,3 @@
-/* 
- * File:   Logger.cpp
- * Author: aomx
- * 
- * Created on 3. August 2013, 14:08
- */
-
 #include <pthread.h>
 #include <ctime>
 
@@ -14,24 +7,24 @@
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
 Logger::Logger() {
-    this->logFile = fopen("log.txt", "w");
+	this->logFile = fopen("log.txt", "w");
 }
 
 Logger::~Logger() {
-    fclose(this->logFile);
+	fclose(this->logFile);
 }
 
 Logger* Logger::getInstance() {
 	static Logger instance;
-    return &instance;
+	return &instance;
 }
 
-void Logger::writeMessage (string msg) {
-//    DBG("logger writing message");
-    time_t t = time(0);   // get time now
-    struct tm * now = localtime( & t );
-    char buf[80];
-    strftime(buf, sizeof(buf), "%d-%m-%Y %H:%M:%S", now);
-    fprintf(this->logFile, "%s %s\n", buf, msg.c_str());
- }
+void Logger::writeMessage(string msg) {
+	//    DBG("logger writing message");
+	time_t t = time(0); // get time now
+	struct tm * now = localtime(& t);
+	char buf[80];
+	strftime(buf, sizeof(buf), "%d-%m-%Y %H:%M:%S", now);
+	fprintf(this->logFile, "%s %s\n", buf, msg.c_str());
+}
 

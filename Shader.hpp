@@ -4,15 +4,15 @@
 #include <GL/glew.h>
 
 class Shader {
-	public:
-		Shader(std::string fileName, GLint type);
-		GLuint  getID();
+public:
+	Shader(std::string fileName, GLint type);
+	GLuint getID();
 
-	private:
-		GLuint shaderID;
-		std::string name;
-		char *shaderContent;
-		static GLchar errorBuffer[1000];
-		bool loadFile(const char *fileName);
+private:
+	GLuint shaderID;
+	std::string name;
+	char *shaderContent;
+	static GLchar errorBuffer[1000];
+	bool loadFile(const char *fileName);
 };
 #endif
