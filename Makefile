@@ -1,11 +1,11 @@
 CC = g++
-CFLAGS = -Wall -pedantic -std=c++0x -g -static
+CFLAGS = -Wall -pedantic -std=gnu++14 -g -static -I /usr/local/include/bullet/ -O2
 PROG = main
 
 SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp DynamicsWorld.cpp camera.cpp
 OBJS := $(SRCS:.cpp=.o)
 prereq_files := $(SRCS:.cpp=.d)
-LIBS = -L ./ -lGL -lBulletDynamics -lBulletCollision -lLinearMath -lGLEW -lglfw
+LIBS = -L ./ -lGL -lBulletDynamics -lBulletCollision -lLinearMath -lBulletSoftBody -lGLEW -lglfw -lm
 
 all:
 

@@ -14,43 +14,32 @@
 #include <unistd.h>
 #include <string>
 
-
-
 #if 1
 
-#define NUM_QUADS 800
+
+using namespace std;
+#define ROT_SPEED 5.0f
+#define MOVE_SPEED 2.0f
+#define NUM_QUADS 500
 
 GLuint vbuffer, colorBuffer;
 GLuint VertexArrayID;
 Shader *vertexShader, *fragmentShader; 
 GLuint shaderProgrammeID ;
 int matrix_location, mvp_location = 0;
-int numReservedQuads = NUM_QUADS + 100;
-int currentQuad = 0;
-Quad **quads;
-
+vector<Quad*> quads;
 
 int windowWidth = 1200, windowHeight = 900;
 
 GLchar errorBuffer[1000];
 
-
 /* Variablen von Bullet Physik Interface... */
 DynamicsWorld myWorld;
-btDynamicsWorld *m_dynamicsWorld;
-
-int numExtraQuads = 0;
-
-
+btDynamicsWorld *dynamicsWorld;
 
 Logger* Logger::instance = NULL;
 
-
 GLFWwindow* window;
-
-#define ROT_SPEED 5.0f
-#define MOVE_SPEED 2.0f
-
 
 Camera camera;
 
@@ -62,21 +51,14 @@ static bool isKeyPressed (int *keysToCheck, int numKeys, int key) {
 }
 
 
-void addQuad(float posX, float posY, float posZ, vec4 speedVec ) {
-	if (currentQuad == numReservedQuads) {
-		numReservedQuads += 100;
-		quads = (Quad**) realloc(quads, sizeof(Quad*) * numReservedQuads);
-	}
+void addQuad(float posX, float posY, float posZ, vec4 speedVec, float mass = 1.0f ) {
+	static int addedQuads = 0;
+	Quad *quad = new Quad(posX, posY, posZ);
+	quads.push_back(quad);
+	addedQuads++;
 
-
-	
-	quads[currentQuad] = new Quad(posX, posY, posZ);
-	Quad *myQuad = quads[currentQuad];
-
-	myWorld.addRigidQuad(myQuad->getX(), myQuad->getY(),myQuad->getZ(), 1.0f);	
-	myWorld.setSpeed(currentQuad+1, speedVec.x, speedVec.y, speedVec.z);
-	currentQuad++;
-
+	myWorld.addRigidQuad(quad->getX(), quad->getY(),quad->getZ(), mass);	
+	myWorld.setSpeed(addedQuads, speedVec.x, speedVec.y, speedVec.z);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -112,13 +94,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			camera.incRotateX(  ROT_SPEED );
 		}
 		else if (key == GLFW_KEY_F) {
-			
 			vec4 posVec = vec4(0.0f, 0.0f, 5.0f, 0.0f) * camera.getViewRotateXY();
 			posVec = posVec * -20.0f;
 			DBG("adding at x=%f, y=%f, z=%f", camera.getX(), camera.getY(), camera.getZ());
 			addQuad(camera.getX(), camera.getY(), camera.getZ(), posVec);	
-			
-			
 		}
 
     }
@@ -135,9 +114,9 @@ void handleResize (GLFWwindow *window,int width,int height) {
 }
 
 void initPhysics() {
-    
+
 	myWorld.initWorld();
-	m_dynamicsWorld = myWorld.getWorld();
+	dynamicsWorld = myWorld.getWorld();
 }
 
 void initializeOpenGL() {
@@ -146,28 +125,18 @@ void initializeOpenGL() {
 
     glEnable ( GL_DEPTH_TEST ); 
     double xVal = 0.0f;
-    double yVal = 30.0f;
-    double baseX = 0.00f;
-    double t = 0.00;
-	
-	quads = (Quad**) malloc(sizeof(Quad*) * numReservedQuads);
-
-	vec4 vec = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-	
-	addQuad(0.0f, -50.0f, 0.0f, vec );
-
+    double yVal = 240.0f;
+	float mass = 1.0f;
+	vec4 vec = vec4(0.0f, -5.0f, 0.0f, 0.0f);
     
     for (int i = 0; i < NUM_QUADS; i++) {
-        t = -1 + 2 * ((float) (currentQuad / (float) NUM_QUADS));
-        
-        //        quads[i]->setColor(r,g,b);
-        //        xVal = 5.00;
         if (i % 25 == 0) {
-            xVal = 0.0f;
-            yVal += 4.00f;
+            xVal += 3.5f;
+            yVal = 240.0;
+			mass += 1.0f;
         }
-        xVal += 3.5f;
-		addQuad(xVal, yVal, 3.0f, vec);
+        yVal -= 4.0f;
+		addQuad(xVal, yVal, 3.0f, vec, mass);
     }
 
 	
@@ -191,8 +160,7 @@ void _update_fps_counter () {
 }
 
 int main(int argc, char** argv) {
-	int running = GL_TRUE;
-	  srand (time(NULL));
+	srand (time(NULL));
 
 	/* Initialize GLFW */
 	if( !glfwInit() )
@@ -225,8 +193,6 @@ int main(int argc, char** argv) {
 		exit(EXIT_FAILURE);
 
 	}
-
-	
 	
 	glfwSetWindowTitle(window, "Shapes-C-Tryout");
 	glfwSetKeyCallback(window, key_callback);
@@ -249,8 +215,6 @@ int main(int argc, char** argv) {
 	
 	initPhysics();
 	initializeOpenGL();
-        float speed = 1.0f; // move at 1 unit per second
-        float last_position = 0.0f;
         
 	while( !glfwWindowShouldClose(window) )
 	{
@@ -266,33 +230,31 @@ int main(int argc, char** argv) {
 		float ms = elapsed_seconds;
 
 		///step the simulation
-		if (m_dynamicsWorld)
-		{
+		if (dynamicsWorld) {
+			dynamicsWorld->stepSimulation(ms);
 			//for (int i = 0; i < 60; i++)
 			//    myWorld.getBody(i)->applyCentralForce(btVector3(btScalar(0.0f), btScalar(0.1f), btScalar(-5.00f)));
 			//
-			m_dynamicsWorld->stepSimulation(ms);
+
 				//optional but useful: debug drawing
 			//                        m_dynamicsWorld->debugDrawWorld();
 		}
-
-
-		btScalar	m[16];		
-
-		for(int i=0;i<currentQuad-1;i++) {
-			btRigidBody*		body =myWorld.getBody(i+2);
+			
+		int i = 1;
+		for(auto quad : quads) {
+			btScalar	m[16];
+			btRigidBody*		body =myWorld.getBody(i);
 			btDefaultMotionState* myMotionState = (btDefaultMotionState*)body->getMotionState();
-
 			myMotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
-			quads[i]->setMatrix(m);
+			quad->setMatrix(m);
+			i++;
 		}
 
-		glUseProgram (quads[0]->shaderProgrammeID);
+		glUseProgram (quads.at(0)->shaderProgrammeID);
 
-		for (int i = 0; i < currentQuad; i++) {
-
-			glUniformMatrix4fv(quads[i]->mvp_location, 1, GL_FALSE, glm::value_ptr(camera.getMVP()));
-			quads[i]->draw();
+		for (auto quad : quads) {
+			glUniformMatrix4fv(quad->mvp_location, 1, GL_FALSE, glm::value_ptr(camera.getMVP()));
+			quad->draw();
 		}
 				
 		/*  Swap front and back rendering buffers*/

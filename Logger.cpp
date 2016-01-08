@@ -22,16 +22,8 @@ Logger::~Logger() {
 }
 
 Logger* Logger::getInstance() {
-    if (instance == NULL) {
-        pthread_mutex_init(&mutex1, NULL);
-        pthread_mutex_lock( &mutex1 );
-        if (instance == NULL) {
-            instance = new Logger();
-        }
-        pthread_mutex_unlock( &mutex1 );
-
-    }
-    return instance;
+	static Logger instance;
+    return &instance;
 }
 
 void Logger::writeMessage (string msg) {

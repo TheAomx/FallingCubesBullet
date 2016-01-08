@@ -3,19 +3,16 @@
 #include "header.h"
 
 Camera::Camera() {
-	rotX = 0.0f;
+	rotX = -40.0f;
 	rotY = 0.0f;	
 	rotZ = 0.0f;
 	setPos(0.0f, 0.0f, 70.0f);
 	setPerspective(45.0f, 1.0f, 0.1f, 200.0f );
 	
-	ViewRotateX = glm::rotate(glm::mat4(1.0f), glm::radians(rotX), glm::vec3(1.0f, 0.0f, 0.0f));
-	ViewRotateXY = glm::rotate(ViewRotateX, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
-	View = glm::translate(ViewRotateXY,glm::vec3(posX, posY, posZ));
+	recalcRotateView();
 	Model = glm::scale(glm::mat4(1.0f),glm::vec3(1.0f));
 	
 	MVP = Projection * View * Model;
-	
 }
 
 Camera::~Camera() {

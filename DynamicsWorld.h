@@ -39,9 +39,9 @@ class DynamicsWorld {
 		void setSpeed(int i, float speedX, float speedY, float speedZ);
 
     private:
-		btDynamicsWorld *m_dynamicsWorld;		
+		btDynamicsWorld *dynamicsWorld;		
 #ifdef PARALLEL
-		class	btThreadSupportInterface *m_threadSupportSolver;
+		class	btThreadSupportInterface *threadSupportSolver;
 		btThreadSupportInterface* createSolverThreadSupport(int maxNumThreads)
 		{
 
@@ -53,16 +53,14 @@ class DynamicsWorld {
 			return threadSupport;
 		}
 #endif
-		btDefaultCollisionConfiguration *m_collisionConfiguration;
-		btCollisionDispatcher *m_dispatcher;
-		btBroadphaseInterface *m_broadphase;
-		btConstraintSolver *m_solver;	
+		btDefaultCollisionConfiguration *collisionConfiguration;
+		btCollisionDispatcher *dispatcher;
+		btBroadphaseInterface *broadphase;
+		btConstraintSolver *solver;	
 		btBoxShape* colShape;
 		btTransform startTransform;
-		btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
-		vector<btRigidBody*> rigidBodies;     
-		
-
+		btAlignedObjectArray<btCollisionShape*> collisionShapes;
+		vector<btRigidBody*> rigidBodies;
 };
 
 #endif // DYNAMICS_WORLD_H
