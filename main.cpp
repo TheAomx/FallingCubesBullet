@@ -1,5 +1,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string>
+
 #include "BulletDynamics/btBulletDynamicsCommon.h"
 #include "header.h"
 #include "Shader.hpp"
@@ -8,34 +14,20 @@
 #include "quad.h"
 #include "camera.h"
 #include "DynamicsWorld.h"
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string>
 
 using namespace std;
 #define ROT_SPEED 5.0f
 #define MOVE_SPEED 2.0f
 #define NUM_QUADS 500
 
-GLuint vbuffer, colorBuffer;
-GLuint VertexArrayID;
-Shader *vertexShader, *fragmentShader;
-GLuint shaderProgrammeID;
-int matrix_location, mvp_location = 0;
-vector<Quad> quads;
-
 int windowWidth = 1200, windowHeight = 900;
 
-GLchar errorBuffer[1000];
-
-/* Variablen von Bullet Physik Interface... */
 DynamicsWorld myWorld;
 Logger* Logger::instance = NULL;
 GLFWwindow* window;
 
 Camera camera;
+vector<Quad> quads;
 
 static bool isKeyPressed(int *keysToCheck, int numKeys, int key) {
 	for (int i = 0; i < numKeys; i++) {
@@ -44,7 +36,7 @@ static bool isKeyPressed(int *keysToCheck, int numKeys, int key) {
 	return false;
 }
 
-void addQuad(float posX, float posY, float posZ, vec4 speedVec, float mass = 1.0f) {
+void addQuad(vector<Quad> &quads, float posX, float posY, float posZ, vec4 speedVec, float mass = 1.0f) {
 	unsigned int addedQuads = quads.size();
 	Quad quad(posX, posY, posZ);
 	quads.push_back(quad);
@@ -54,25 +46,28 @@ void addQuad(float posX, float posY, float posZ, vec4 speedVec, float mass = 1.0
 	addedQuads++;
 }
 
-void clearAllQuads() {
+void clearAllQuads(vector<Quad> &quads) {
 	quads.clear();
 	myWorld.clear();
 }
 
 void letQuadBlockFallDown() {
+	constexpr double initial_y = 100.0f;
+	constexpr double steps_x = 3.5f;
+	constexpr double steps_y = 4.0f;
 	double xVal = 0.0f;
-	double yVal = 240.0f;
+	double yVal = initial_y;
 	float mass = 1.0f;
-	vec4 vec = vec4(0.0f, -5.0f, 0.0f, 0.0f);
+	vec4 vec = vec4(0.0f, -1.0f, 0.0f, 0.0f);
 
 	for (int i = 0; i < NUM_QUADS; i++) {
 		if (i % 25 == 0) {
-			xVal += 3.5f;
-			yVal = 240.0;
+			xVal += steps_x;
+			yVal = initial_y;
 			mass += 1.0f;
 		}
-		yVal -= 4.0f;
-		addQuad(xVal, yVal, 3.0f, vec, mass);
+		yVal -= steps_y;
+		addQuad(quads, xVal, yVal, 3.0f, vec, mass);
 	}
 }
 
@@ -110,14 +105,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			camera.incRotateX(ROT_SPEED);
 			break;
 		case GLFW_KEY_SPACE:
-			clearAllQuads();
+			clearAllQuads(quads);
 			break;
 		case GLFW_KEY_F:
 		{
-			vec4 posVec = vec4(0.0f, 0.0f, 1.0f, 0.0f) * camera.getViewRotateXY();
+			vec4 posVec = vec4(0.0f, 0.0f, 3.0f, 0.0f) * camera.getViewRotateXY();
 			posVec = posVec * -20.0f;
 			DBG("adding at x=%f, y=%f, z=%f", camera.getX(), camera.getY(), camera.getZ());
-			addQuad(camera.getX(), camera.getY(), camera.getZ(), posVec);
+			addQuad(quads, camera.getX(), camera.getY(), camera.getZ(), posVec);
 		}
 			break;
 		case GLFW_KEY_G:
@@ -140,7 +135,6 @@ void initPhysics() {
 }
 
 void initializeOpenGL() {
-
 	camera.setPerspective(45.0f, (float) windowWidth / (float) windowHeight, 0.1f, 400.0f);
 
 	glEnable(GL_DEPTH_TEST);

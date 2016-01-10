@@ -72,8 +72,6 @@ Quad::Quad(float x, float y, float z) {
 	float g = (float) rand() / (float) RAND_MAX;
 	float b = (float) rand() / (float) RAND_MAX;
 
-	DBG("r=%f,g=%f,b=%f", r, g, b);
-
 	setColor(1.0f, 0.0f, 0.0f);
 
 	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
@@ -93,12 +91,9 @@ Quad::Quad(float x, float y, float z) {
 	time_location = glGetUniformLocation(shaderProgrammeID, "time");
 	glUniform1f(time_location, (float) rand() / (float) RAND_MAX);
 
-	DBG("mvp was %d", mvp_location);
 
 	trans_location = glGetUniformLocation(shaderProgrammeID, "trans");
 	//    glUniformMatrix4fv (trans_location, 1, GL_FALSE, glm::value_ptr(this->MVP));
-
-	DBG("trans was %d", trans_location);
 
 	this->scaleFactorX = 1.00f;
 	this->scaleFactorY = 1.00f;
