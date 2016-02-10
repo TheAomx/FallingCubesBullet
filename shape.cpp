@@ -31,14 +31,7 @@ void Shape::setRotateValues(float rotX, float rotY, float rotZ) {
 }
 
 void Shape::setMatrix(btScalar *mat) {
-	// TODO: why does std::copy not work in this case?	
-	//std::copy(&m[0], &m[15], mat);
-	
-//	memcpy(m, mat, 16);
-
-	for (int i = 0; i < 16; i++) {
-		this->m[i] = mat[i];
-	}
+	std::memcpy(m, mat, matrix_dimension*sizeof(btScalar));
 }
 
 float Shape::getRotateValueX() {

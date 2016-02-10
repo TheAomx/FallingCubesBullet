@@ -67,11 +67,6 @@ Quad::Quad(float x, float y, float z) {
 	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(this->color), &this->color[0], GL_STATIC_DRAW);
 
-
-	float r = (float) rand() / (float) RAND_MAX;
-	float g = (float) rand() / (float) RAND_MAX;
-	float b = (float) rand() / (float) RAND_MAX;
-
 	setColor(1.0f, 0.0f, 0.0f);
 
 	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);

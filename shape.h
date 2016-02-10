@@ -44,10 +44,13 @@ class Shape
     virtual void draw() =  0;        // virtuelle Draw-Methode für jedes Shape
     virtual void update() = 0;        // virtuelle update-Methode für jedes Shape
     
+    
+    
     glm::mat4 ViewTranslate, ViewRotateX, ViewRotateY, ViewRotateZ, View, Model, MVP;
     GLuint colorBuffer;
     float color[3*24];
-    btScalar	m[16];
+    static constexpr int matrix_dimension = 16;
+    btScalar	m[matrix_dimension];
     bool mvp_changed;
 
   private:                             // privat
