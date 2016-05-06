@@ -57,6 +57,7 @@ private:
 
 	void recalcView();
 	void recalcRotateView();
+	void update_mvp();
 
 };
 

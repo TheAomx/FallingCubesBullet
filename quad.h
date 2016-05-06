@@ -14,11 +14,12 @@ class Quad : public Shape {
         void setScaling(float x = 1.00f, float y = 1.0f, float z = 1.0f);
         void draw();
         void update();
-	int mvp_location, trans_location, time_location;
+	int mvp_location, trans_location, mvi_location, time_location;
 	 
     private:
 	void initShaders();
         float scaleFactorX, scaleFactorY, scaleFactorZ;
+	GLfloat red, green, blue;
         static GLuint vbuffer, VertexArrayID;
         GLuint shaderProgrammeID;
         static std::unique_ptr<Shader> vertexShader, fragmentShader; 

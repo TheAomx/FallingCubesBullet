@@ -3,6 +3,7 @@
 
 #include "quad.h"
 #include "header.h"
+#include "Utils.h"
 
 GLuint Quad::vbuffer = 0, Quad::VertexArrayID = 0;
 //int Quad::mvp_location = 0, Quad::trans_location = 0;
@@ -10,22 +11,31 @@ GLuint Quad::vbuffer = 0, Quad::VertexArrayID = 0;
 std::unique_ptr<Shader> Quad::vertexShader = NULL;
 std::unique_ptr<Shader> Quad::fragmentShader = NULL;
 
-static const float cubeVerticesStrip[] = {
+#define A -1,-1, 1, 
+#define B  1,-1, 1, 
+#define C -1, 1, 1,
+#define D  1, 1, 1,
+#define E -1,-1,-1,
+#define F  1,-1,-1,
+#define G -1, 1,-1,
+#define H  1, 1,-1,
+
+static const GLfloat cubeVerticesStrip[] = {
 	// Front face
-	-1, -1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1,
+	A B C D
 	// Right face
-	1, -1, 1, 1, -1, -1, 1, 1, 1, 1, 1, -1,
+	B F H D
 	// Back face
-	1, -1, -1, -1, -1, -1, 1, 1, -1, -1, 1, -1,
+	F E H G
 	// Left face
-	-1, -1, -1, -1, -1, 1, -1, 1, -1, -1, 1, 1,
+	E A G C
 	// Bottom face
-	-1, -1, -1, 1, -1, -1, -1, -1, 1, 1, -1, 1,
+	E F A B
 	// Top face
-	-1, 1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1
+	C D G H
 };
 
-static const float cubeTexCoordsStrip[] = {
+static const GLfloat cubeTexCoordsStrip[] = {
 	// Front face
 	0, 0, 1, 0, 0, 1, 1, 1,
 	// Right face
@@ -40,6 +50,43 @@ static const float cubeTexCoordsStrip[] = {
 	0, 0, 1, 0, 0, 1, 1, 1
 };
 
+#if 1
+#if 0
+#define A_NORMAL  1, 1, 1, 
+#define B_NORMAL  1, -1, 1,
+#define C_NORMAL  -1, 1, 1,
+#define D_NORMAL  -1, -1, 1,
+#define E_NORMAL  1, 1, -1, 
+#define F_NORMAL  1, -1, -1, 
+#define G_NORMAL  -1, 1, -1,
+#define H_NORMAL  -1, -1, -1,
+#endif
+
+#define A_NORMAL  -1, -1, 1, 
+#define B_NORMAL  1, -1, 1,
+#define C_NORMAL  -1, 1, 1,
+#define D_NORMAL  1, 1,  1,
+#define E_NORMAL  -1, -1,-1, 
+#define F_NORMAL  1, -1, -1, 
+#define G_NORMAL  -1, 1, -1,
+#define H_NORMAL  1, 1,  -1,
+
+static const GLfloat cubeNormalsStrip [] = {
+	// Front face
+	A_NORMAL B_NORMAL C_NORMAL D_NORMAL
+	// Right face
+	B_NORMAL F_NORMAL H_NORMAL D_NORMAL
+	// Back face
+	F_NORMAL E_NORMAL H_NORMAL G_NORMAL
+	// Left face
+	E_NORMAL A_NORMAL G_NORMAL C_NORMAL
+	// Bottom face
+	E_NORMAL F_NORMAL A_NORMAL B_NORMAL
+	// Top face
+	C_NORMAL D_NORMAL G_NORMAL H_NORMAL
+};
+#endif
+
 void Quad::initShaders() {
 	glGenBuffers(1, &Quad::vbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, Quad::vbuffer);
@@ -51,6 +98,20 @@ void Quad::initShaders() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*) NULL);
 
 	glEnableVertexAttribArray(0);
+	
+	glGenBuffers(1, &normalBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeNormalsStrip), cubeNormalsStrip, GL_STATIC_DRAW);
+	
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1, // attribute
+		3, // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		0, // stride
+		(void*) NULL // array buffer offset
+	);
 
 	Quad::vertexShader = std::make_unique<Shader>("quad.vertex", GL_VERTEX_SHADER);
 	Quad::fragmentShader = std::make_unique<Shader>("quad.frag", GL_FRAGMENT_SHADER);
@@ -63,16 +124,7 @@ Quad::Quad(float x, float y, float z) {
 		initShaders();
 	}
 
-	glGenBuffers(1, &colorBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(this->color), &this->color[0], GL_STATIC_DRAW);
-
 	setColor(1.0f, 0.0f, 0.0f);
-
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*) NULL);
-
-	glEnableVertexAttribArray(1);
 
 	shaderProgrammeID = glCreateProgram();
 	glAttachShader(shaderProgrammeID, Quad::fragmentShader->getID());
@@ -83,16 +135,14 @@ Quad::Quad(float x, float y, float z) {
 	glUseProgram(shaderProgrammeID);
 	glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(MVP));
 
-	time_location = glGetUniformLocation(shaderProgrammeID, "time");
-	glUniform1f(time_location, (float) rand() / (float) RAND_MAX);
-
-
 	trans_location = glGetUniformLocation(shaderProgrammeID, "trans");
-	//    glUniformMatrix4fv (trans_location, 1, GL_FALSE, glm::value_ptr(this->MVP));
 
 	this->scaleFactorX = 1.00f;
 	this->scaleFactorY = 1.00f;
 	this->scaleFactorZ = 1.0f;
+	this->red = Utils::getRandNumber(0.0f, 1.0f);
+	this->green = Utils::getRandNumber(0.0f, 1.0f);
+	this->blue = Utils::getRandNumber(0.0f, 1.0f);
 }
 
 Quad::~Quad() {
@@ -108,7 +158,8 @@ void Quad::draw() {
 	glUseProgram(shaderProgrammeID);
 	trans_location = glGetUniformLocation(shaderProgrammeID, "trans");
 	glUniformMatrix4fv(trans_location, 1, GL_FALSE, this->m);
-
+	
+	glColor3f(this->red, this->green, this->blue);
 	glBindVertexArray(Quad::VertexArrayID);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, sizeof(cubeVerticesStrip) / sizeof(float));
 }

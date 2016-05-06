@@ -46,8 +46,8 @@ class Shape
     
     
     
-    glm::mat4 ViewTranslate, ViewRotateX, ViewRotateY, ViewRotateZ, View, Model, MVP;
-    GLuint colorBuffer;
+    glm::mat4 ViewTranslate, ViewRotateX, ViewRotateY, ViewRotateZ, View, Model, MVP, ModelViewInverse;
+    GLuint normalBuffer;
     float color[3*24];
     static constexpr int matrix_dimension = 16;
     btScalar	m[matrix_dimension];

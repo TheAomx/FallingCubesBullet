@@ -1,13 +1,23 @@
 #version 330 compatibility
 layout(location = 0) in vec3 vertex_position;
-layout(location = 1) in vec3 vertex_color;
+layout(location = 1) in vec3 vertex_normal;
 
 uniform mat4 mvp;
 uniform mat4 trans;
 
 out vec3 color;
 
+vec4 lightDirection = vec4(0.0, 1.0, 1.0, 0.0);
+out float intensity;
+
 void main () {
-  color = vertex_color;
-  gl_Position =  mvp * trans * vec4 (vertex_position, 1.0);
+  vec4 v = vec4(vertex_position, 1.0);
+  vec4 normal = normalize(vec4(vertex_normal,0));
+  /*v.z = sin(5.0*v.x )*0.25;*/
+
+  vec4 pos = mvp * trans * v;
+  intensity = dot(lightDirection, trans * normal);
+
+  gl_FrontColor = gl_Color;
+  gl_Position =  pos;
 }

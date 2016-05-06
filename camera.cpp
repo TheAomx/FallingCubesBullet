@@ -3,7 +3,7 @@
 #include "header.h"
 
 Camera::Camera() {
-	rotX = -40.0f;
+	rotX = 0.0f;
 	rotY = 0.0f;
 	rotZ = 0.0f;
 	setPos(0.0f, 0.0f, 70.0f);
@@ -82,15 +82,19 @@ float Camera::getZ() {
 	return this->posZ;
 }
 
+void Camera::update_mvp() {
+	MVP = Projection * View * Model;
+}
+
 void Camera::setPerspective(float angle, float ratio, float nearClip, float farClip) {
 	Projection = glm::perspective(angle, ratio, nearClip, farClip);
-	MVP = Projection * View * Model;
+	update_mvp();
 }
 
 void Camera::recalcView() {
 	View = glm::translate(ViewRotateXY, glm::vec3(-posX, -posY, -posZ));
-
-	MVP = Projection * View * Model;
+	update_mvp();
+	
 }
 
 void Camera::recalcRotateView() {
@@ -98,7 +102,7 @@ void Camera::recalcRotateView() {
 	ViewRotateXY = glm::rotate(ViewRotateX, glm::radians(rotY), glm::vec3(0.0f, 1.0f, 0.0f));
 	View = glm::translate(ViewRotateXY, glm::vec3(-posX, -posY, -posZ));
 
-	MVP = Projection * View * Model;
+	update_mvp();
 }
 
 void Camera::moveForward(float length) {
