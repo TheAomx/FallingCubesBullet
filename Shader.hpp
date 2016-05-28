@@ -10,9 +10,9 @@ public:
 
 private:
 	GLuint shaderID;
-	std::string name;
+	std::string fileName;
 	std::string shaderContent;
 	static GLchar errorBuffer[1000];
-	bool loadFile(const char *fileName);
+	void loadFile();
 };
 #endif

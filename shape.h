@@ -30,9 +30,6 @@ class Shape
     float getRotateSpeedValueY();
     float getRotateSpeedValueZ();
     void setRotateSpeed(float x = 0.0f, float y = 0.0f, float z = 0.0f);
-    
-    void setColor(float r, float g, float b);
-
 
     void setRotateValues(float rotX, float rotY, float rotZ);
     float getRotateValueX();
@@ -42,18 +39,13 @@ class Shape
     void setMatrix(btScalar *mat);
 
     virtual void draw() =  0;        // virtuelle Draw-Methode für jedes Shape
-    virtual void update() = 0;        // virtuelle update-Methode für jedes Shape
-    
-    
-    
+
     glm::mat4 ViewTranslate, ViewRotateX, ViewRotateY, ViewRotateZ, View, Model, MVP, ModelViewInverse;
-    GLuint normalBuffer;
-    float color[3*24];
     static constexpr int matrix_dimension = 16;
     btScalar	m[matrix_dimension];
     bool mvp_changed;
 
-  private:                             // privat
+  private:
     
     void adjustMatrices();
     float x,y,z;

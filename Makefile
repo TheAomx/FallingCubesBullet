@@ -1,8 +1,8 @@
 CC = g++
-CFLAGS = -Wall -std=gnu++14 -g -static -I /usr/local/include/bullet/ -Os
+CFLAGS = -Wall -std=gnu++14 -g -static -I /usr/local/include/bullet/ -O3
 PROG = main
 
-SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp DynamicsWorld.cpp camera.cpp
+SRCS =  main.cpp Shader.cpp FatalException.cpp Logger.cpp shape.cpp quad.cpp DynamicsWorld.cpp camera.cpp Utils.cpp
 OBJS := $(SRCS:.cpp=.o)
 prereq_files := $(SRCS:.cpp=.d)
 LIBS = -L ./ -lGL -lBulletDynamics -lBulletCollision -lLinearMath -lBulletSoftBody -lGLEW -lglfw -lm

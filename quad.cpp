@@ -5,7 +5,7 @@
 #include "header.h"
 #include "Utils.h"
 
-GLuint Quad::vbuffer = 0, Quad::VertexArrayID = 0;
+GLuint Quad::vbuffer = 0, Quad::VertexArrayID = 0, Quad::normalBuffer;
 //int Quad::mvp_location = 0, Quad::trans_location = 0;
 
 std::unique_ptr<Shader> Quad::vertexShader = NULL;
@@ -50,18 +50,6 @@ static const GLfloat cubeTexCoordsStrip[] = {
 	0, 0, 1, 0, 0, 1, 1, 1
 };
 
-#if 1
-#if 0
-#define A_NORMAL  1, 1, 1, 
-#define B_NORMAL  1, -1, 1,
-#define C_NORMAL  -1, 1, 1,
-#define D_NORMAL  -1, -1, 1,
-#define E_NORMAL  1, 1, -1, 
-#define F_NORMAL  1, -1, -1, 
-#define G_NORMAL  -1, 1, -1,
-#define H_NORMAL  -1, -1, -1,
-#endif
-
 #define A_NORMAL  -1, -1, 1, 
 #define B_NORMAL  1, -1, 1,
 #define C_NORMAL  -1, 1, 1,
@@ -85,7 +73,6 @@ static const GLfloat cubeNormalsStrip [] = {
 	// Top face
 	C_NORMAL D_NORMAL G_NORMAL H_NORMAL
 };
-#endif
 
 void Quad::initShaders() {
 	glGenBuffers(1, &Quad::vbuffer);
@@ -99,8 +86,8 @@ void Quad::initShaders() {
 
 	glEnableVertexAttribArray(0);
 	
-	glGenBuffers(1, &normalBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glGenBuffers(1, &Quad::normalBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, Quad::normalBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeNormalsStrip), cubeNormalsStrip, GL_STATIC_DRAW);
 	
 	glEnableVertexAttribArray(1);
@@ -118,13 +105,12 @@ void Quad::initShaders() {
 }
 
 Quad::Quad(float x, float y, float z) {
+	DBG("constructor of quad called!");
 	setPos(x, y, z);
 
 	if (Quad::vbuffer == 0) {
 		initShaders();
 	}
-
-	setColor(1.0f, 0.0f, 0.0f);
 
 	shaderProgrammeID = glCreateProgram();
 	glAttachShader(shaderProgrammeID, Quad::fragmentShader->getID());
@@ -145,8 +131,61 @@ Quad::Quad(float x, float y, float z) {
 	this->blue = Utils::getRandNumber(0.0f, 1.0f);
 }
 
-Quad::~Quad() {
+Quad::~Quad() noexcept {
+	if (shaderProgrammeID != 0) {
+		DBG("desctructor of quad called!");
+		glDetachShader(shaderProgrammeID, Quad::fragmentShader->getID());
+		glDetachShader(shaderProgrammeID, Quad::vertexShader->getID());
+		glDeleteProgram(shaderProgrammeID);
+	}
+	else {
+		DBG("dummy desctructor of quad called!");
+	}
  }
+
+Quad::Quad (const Quad& other) {
+	DBG("copy constructor of quad called!");
+	mvp_location = other.mvp_location;
+	mvp_changed = other.mvp_changed;
+	red = other.red;
+	green = other.green;
+	blue = other.blue;
+	shaderProgrammeID = other.shaderProgrammeID;
+}
+
+Quad::Quad (Quad&& other) noexcept {
+	DBG("move constructor of quad called!");
+	mvp_location = other.mvp_location;
+	mvp_changed = other.mvp_changed;
+	red = other.red;
+	green = other.green;
+	blue = other.blue;
+	shaderProgrammeID = other.shaderProgrammeID;
+	other.shaderProgrammeID = 0;
+}
+
+Quad& Quad::operator= (const Quad& other) {
+	DBG("copy assignment op of quad called!");
+	mvp_location = other.mvp_location;
+	mvp_changed = other.mvp_changed;
+	red = other.red;
+	green = other.green;
+	blue = other.blue;
+	shaderProgrammeID = other.shaderProgrammeID;
+	return *this;
+}
+
+Quad& Quad::operator= (Quad&& other) noexcept {
+	DBG("move assignment op of quad called!");
+	mvp_location = other.mvp_location;
+	mvp_changed = other.mvp_changed;
+	red = other.red;
+	green = other.green;
+	blue = other.blue;
+	shaderProgrammeID = other.shaderProgrammeID;
+	other.shaderProgrammeID = 0;
+	return *this;
+}
 
 void Quad::setScaling(float x, float y, float z) {
 	this->scaleFactorX = x;
@@ -158,14 +197,7 @@ void Quad::draw() {
 	glUseProgram(shaderProgrammeID);
 	trans_location = glGetUniformLocation(shaderProgrammeID, "trans");
 	glUniformMatrix4fv(trans_location, 1, GL_FALSE, this->m);
-	
 	glColor3f(this->red, this->green, this->blue);
 	glBindVertexArray(Quad::VertexArrayID);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, sizeof(cubeVerticesStrip) / sizeof(float));
-}
-
-void Quad::update() {
-	//printf("quad at x = %f, y = %f, z = %f\n", getX(), getY(), getZ());
-	setRotateValues(getRotateValueX() + getRotateSpeedValueX(), getRotateValueY() + getRotateSpeedValueY(), getRotateValueZ() + getRotateSpeedValueZ());
-	//    movement->move();
 }

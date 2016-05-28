@@ -116,11 +116,3 @@ void Shape::adjustMatrices() {
 	MVP = View * Model;
 	this->mvp_changed = true;
 }
-
-void Shape::setColor(float r, float g, float b) {
-	for (int v = 0; v < 24; v++) {
-		color[3 * v + 0] = r;
-		color[3 * v + 1] = g;
-		color[3 * v + 2] = b;
-	}
-}

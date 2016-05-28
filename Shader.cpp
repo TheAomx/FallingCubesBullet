@@ -13,9 +13,8 @@ GLchar Shader::errorBuffer[1000];
  */
 Shader::Shader(std::string fileName, GLint type) {
 	GLint status = 0;
-
-	this->name = fileName;
-	loadFile(fileName.c_str());
+	this->fileName = fileName;
+	loadFile();
 	this->shaderID = glCreateShader(type);
 	const char *p = this->shaderContent.c_str();
 	glShaderSource(this->shaderID, 1, &p, NULL);
@@ -23,10 +22,10 @@ Shader::Shader(std::string fileName, GLint type) {
 	glCompileShader(this->shaderID);
 	glGetShaderiv(this->shaderID, GL_COMPILE_STATUS, &status);
 
-	if (status != GL_TRUE) { // Problem beim Kompilieren aufgetaucht. Fehler ausgeben.
+	if (status != GL_TRUE) {
 		int len = 0;
 		glGetShaderInfoLog(this->shaderID, 1000, &len, Shader::errorBuffer);
-		throw FatalException("compilation of " + name + " failed:\n  " + Shader::errorBuffer + "\n");
+		throw FatalException("compilation of " + fileName + " failed:\n  " + Shader::errorBuffer + "\n");
 	}
 
 	DBG("done loading file %s!", fileName.c_str());
@@ -36,13 +35,10 @@ GLuint Shader::getID() {
 	return this->shaderID;
 }
 
-bool Shader::loadFile(const char *fileName) {
+void Shader::loadFile() {
 	std::ifstream in (fileName, std::ios::in | std::ios::binary);
-	
 	in.seekg(0, std::ios::end);
 	shaderContent.resize(in.tellg());
 	in.seekg(0, std::ios::beg);
 	in.read(&shaderContent[0], shaderContent.size());
-	
-	return true;
 }
